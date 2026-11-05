@@ -672,3 +672,53 @@ kbd.m { background: #ffe9c7; }
 #overlay::before { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity .8s;
   background: linear-gradient(#3d8bff, #bfe8ff); }
 #overlay.splash.wait::before { opacity: 1; transition: none; }
+
+/* ---------------------------------------------------------------- touch controls (phones and tablets: see touch.js)
+   A joystick where your left thumb goes down, round cartoon buttons bottom right, a pause button top left.
+   Only while you're playing; the keyboard help's hidden. */
+#touch { position: fixed; inset: 0; z-index: 8; pointer-events: none; display: none; }
+body.touch #touch.playing { display: block; }
+body.touch #help, body.touch #keyList { display: none !important; }
+#tStick { position: absolute; width: 130px; height: 130px; margin: -65px 0 0 -65px; border-radius: 50%; display: none;
+  background: rgba(255, 255, 255, .25); border: 5px solid rgba(28, 26, 46, .7); }
+#tStick.on { display: block; }
+#tStick i { position: absolute; left: 50%; top: 50%; width: 62px; height: 62px; margin: -31px 0 0 -31px; border-radius: 50%;
+  background: #fff8ec; border: 5px solid var(--ink); box-shadow: 0 4px 0 var(--ink); }
+#touch .tb, #tPause { pointer-events: auto; position: absolute; touch-action: none; -webkit-user-select: none; user-select: none;
+  font: 900 15px var(--font); letter-spacing: 1px; color: #fff; border: 5px solid var(--ink); border-radius: 50%; box-shadow: 0 5px 0 var(--ink);
+  text-shadow: 2px 2px 0 var(--ink), -2px 2px 0 var(--ink), 2px -2px 0 var(--ink), -2px -2px 0 var(--ink); opacity: .9; }
+#touch .tb.down { transform: translateY(4px); box-shadow: 0 1px 0 var(--ink); filter: brightness(1.15); }
+#touch .tb { width: 74px; height: 74px; background: linear-gradient(#5aa2ff, #2f7bff); }
+#touch .tb.big { width: 104px; height: 104px; font-size: 19px; background: linear-gradient(#ffb347, #ff8a1a); right: 24px; bottom: 34px; }
+#touch [data-a="kick"] { right: 140px; bottom: 26px; background: linear-gradient(#8fe86a, #45bd3a); }
+#touch [data-a="jump"] { right: 36px; bottom: 152px; background: linear-gradient(#ff8ac8, #ff4fa6); }
+#touch [data-a="grab"] { right: 130px; bottom: 116px; background: linear-gradient(#c08aff, #9248f0); }
+#touch .tb.special { right: 220px; bottom: 60px; background: linear-gradient(#ffe36a, #ffc400); color: #fff; font-size: 13px; }
+#touch .tb.small { width: 60px; height: 60px; font-size: 11px; }
+#touch [data-a="flop"] { right: 40px; bottom: 246px; background: linear-gradient(#b8b0a0, #8a8478); }
+#touch .pickup { right: 120px; bottom: 210px; background: linear-gradient(#ffb347, #ff8a1a); }
+#tPause { left: 16px; top: 16px; width: 58px; height: 58px; background: #fff8ec; display: flex; align-items: center; justify-content: center; gap: 7px; border-radius: 16px; }
+#tPause b { width: 8px; height: 24px; background: var(--ink); border-radius: 3px; }
+/* (on a phone, the power card and the fighters' cards smaller, and out of the buttons' way) */
+@media (max-width: 900px) { body.touch #bl { transform: scale(.7); transform-origin: left bottom; } }
+/* (touch: the fighters' cards go along the top, out of the buttons' way; FLOP and PICK UP by the other buttons,
+   not over the score) */
+body.touch #foes { position: fixed; top: 10px; left: 50%; transform: translateX(-50%) scale(.75); transform-origin: top center; margin: 0; }
+#touch [data-a="flop"] { right: 228px; bottom: 150px; }
+#touch .pickup { right: 300px; bottom: 26px; }
+/* a phone (on its side): everything a bit smaller */
+@media (max-height: 520px) {
+  body.touch #bl { transform: scale(.55); transform-origin: left bottom; left: 10px; bottom: 8px; }
+  body.touch #foes { transform: translateX(-50%) scale(.55); }
+  body.touch #score { transform: scale(.65); transform-origin: top right; }
+  #touch .tb { width: 62px; height: 62px; font-size: 13px; }
+  #touch .tb.big { width: 88px; height: 88px; right: 18px; bottom: 22px; }
+  #touch [data-a="kick"] { right: 118px; bottom: 16px; }
+  #touch [data-a="jump"] { right: 26px; bottom: 126px; }
+  #touch [data-a="grab"] { right: 108px; bottom: 96px; }
+  #touch .tb.special { right: 190px; bottom: 44px; }
+  #touch .tb.small { width: 52px; height: 52px; font-size: 10px; }
+  #touch [data-a="flop"] { right: 190px; bottom: 124px; }
+  #touch .pickup { right: 260px; bottom: 18px; }
+  #tPause { width: 48px; height: 48px; }
+}

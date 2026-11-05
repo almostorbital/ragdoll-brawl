@@ -61,7 +61,8 @@ addEventListener('blur', pauseGame);
 
 function frame(now) {
   requestAnimationFrame(frame);
-  const dt = clamp((now - last) / 1000, 0, 0.05); last = now;   // (never backwards: the first frame can be timed a touch before the clock started)
+  const dt = clamp((now - last) / 1000, 0, 0.05); last = now;
+  updateTouch();   // (touch controls, on a phone or tablet: see touch.js)   // (never backwards: the first frame can be timed a touch before the clock started)
   if (ready && !started) {
     // the title screen: the camera drifts slowly round the island
     const t = now / 1000 * 0.06;
