@@ -1,0 +1,674 @@
+/* Chunky cartoon UI: thick dark outlines (the same ink as the outlines in the game), rounded shapes, bold
+   bouncy type. */
+:root { --ink: #1c1a2e; --orange: #ff9a2a; --blue: #2f7bff; --cream: #fff8ec;
+  --font: "Arial Rounded MT Bold", "Nunito", "Varela Round", "Trebuchet MS", system-ui, sans-serif; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #9fd3f5; font-family: var(--font); user-select: none; }
+canvas { display: block; }
+kbd { display: inline-block; min-width: 1.4em; padding: 2px 6px; margin: 0 2px; border: 2px solid var(--ink); border-bottom-width: 4px;
+  border-radius: 6px; background: #fff; color: var(--ink); font: 800 12px var(--font); text-align: center; }
+kbd.m { background: #ffe9c7; }
+
+/* text with a thick outline */
+.ink, #pow, #you .num small, #score .big span, .banner, #wind, .chip b {
+  -webkit-text-stroke: 0; paint-order: stroke fill;
+  text-shadow: 3px 3px 0 var(--ink), -3px 3px 0 var(--ink), 3px -3px 0 var(--ink), -3px -3px 0 var(--ink),
+    0 3px 0 var(--ink), 0 -3px 0 var(--ink), 3px 0 0 var(--ink), -3px 0 0 var(--ink), 0 7px 0 var(--ink); }
+
+/* ---------------------------------------------------------------- the title / pause screen */
+#overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 10;
+  background: radial-gradient(ellipse at center, rgba(20, 40, 80, .15), rgba(20, 30, 60, .55)); }
+#overlay .box { background: var(--cream); border: 5px solid var(--ink); border-radius: 28px; padding: 22px 34px 26px; max-width: 640px;
+  text-align: center; box-shadow: 0 12px 0 var(--ink), 0 20px 50px rgba(0, 0, 0, .35); animation: pop .5s cubic-bezier(.2, 1.6, .4, 1); color: var(--ink); }
+#overlay h1 { margin: 0; line-height: .95; font-size: 64px; letter-spacing: 2px; transform: rotate(-3deg); }
+#overlay h1 span { display: block; color: var(--orange); paint-order: stroke fill;
+  text-shadow: 4px 4px 0 var(--ink), -4px 4px 0 var(--ink), 4px -4px 0 var(--ink), -4px -4px 0 var(--ink), 0 4px 0 var(--ink), 0 -4px 0 var(--ink), 4px 0 0 var(--ink), -4px 0 0 var(--ink), 0 9px 0 var(--ink); }
+#overlay h1 .w2 { color: var(--blue); font-size: 78px; margin-left: 50px; }
+#overlay .tag { font-size: 18px; font-weight: 800; margin: 16px 0 12px; }
+#overlay .how { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 14px; text-align: left; }
+#overlay .how div { display: flex; gap: 12px; align-items: center; background: #fff; border: 3px solid var(--ink); border-radius: 14px; padding: 7px 12px; font-size: 14px; font-weight: 700; }
+#overlay .how em { font-style: normal; color: #e0571a; }
+#overlay .keys { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 12px; font-size: 13px; font-weight: 700; margin-bottom: 16px; }
+#overlay button { font: 900 30px var(--font); letter-spacing: 3px; padding: 12px 52px; border: 5px solid var(--ink); border-radius: 18px;
+  background: var(--orange); color: #fff; cursor: pointer; box-shadow: 0 7px 0 var(--ink); transition: transform .08s, box-shadow .08s; paint-order: stroke fill;
+  text-shadow: 2px 2px 0 var(--ink), -2px 2px 0 var(--ink), 2px -2px 0 var(--ink), -2px -2px 0 var(--ink), 0 4px 0 var(--ink); animation: throb 1.4s ease-in-out infinite; }
+#overlay button:hover { background: #ffad4d; }
+#overlay button:active { transform: translateY(5px); box-shadow: 0 2px 0 var(--ink); }
+#loading { font-weight: 800; }
+#overlay .pausedOnly { display: none; }
+#overlay.paused .pausedOnly { display: block; font-weight: 800; font-size: 18px; margin: 14px 0 14px; }
+#overlay.paused .pausedOnly::before { content: "PAUSED"; display: block; font-size: 30px; font-weight: 900; letter-spacing: 4px; margin-bottom: 4px; }
+#overlay.paused .how, #overlay.paused .tag { display: none; }
+#overlay.paused h1 .w1::after { content: ""; }
+
+/* ---------------------------------------------------------------- the HUD */
+#hud { position: fixed; inset: 0; pointer-events: none; transition: opacity .3s; }
+#hud.hidden { opacity: 0; }
+
+/* your damage, bottom left */
+#bl { position: absolute; left: 22px; bottom: 20px; display: flex; align-items: flex-end; gap: 14px; }
+#you { position: relative; display: flex; align-items: flex-end; gap: 10px; padding: 10px 18px 8px 12px;
+  background: rgba(255, 248, 236, .92); border: 4px solid var(--ink); border-radius: 22px; box-shadow: 0 6px 0 var(--ink); }
+#you .face { width: 54px; height: 54px; margin-bottom: 4px; }
+#you .num { line-height: 1; }
+#you .num small { font-size: 30px; font-weight: 900; color: #fff; margin-left: 2px; }
+#you .name { position: absolute; top: -14px; left: 14px; background: var(--blue); color: #fff; font-weight: 900; font-size: 13px; letter-spacing: 2px;
+  padding: 2px 10px; border: 3px solid var(--ink); border-radius: 10px; }
+#you.shake { animation: shake .35s; }
+#you .col { display: flex; flex-direction: column; }
+#you .num span { display: inline-block; font-size: 64px; font-weight: 900; color: #fff; }
+#you .num span.bump { animation: bump .3s; }
+#you .dmgbar { display: flex; align-items: center; gap: 6px; margin-top: 2px; font-size: 11px; font-weight: 900; color: var(--ink); letter-spacing: 1px; }
+#you .dmgbar .bar { width: 80px; height: 10px; border: 2px solid var(--ink); border-radius: 6px; background: #fff; overflow: hidden; }
+#you .dmgbar i { display: block; height: 100%; width: 0; background: #7fe05a; transition: width .2s; }
+#you .dmgbar b { font-size: 13px; min-width: 38px; }
+#you.max { animation: glowmax 1s ease-in-out infinite; }
+@keyframes glowmax { 50% { box-shadow: 0 6px 0 var(--ink), 0 0 26px 6px rgba(255, 210, 58, .8); } }
+#combo { position: absolute; left: 30px; bottom: 150px; font-size: 26px; font-weight: 900; color: #fff; opacity: 0; transition: opacity .3s; transform: rotate(-6deg);
+  text-shadow: 3px 3px 0 var(--ink), -3px 3px 0 var(--ink), 3px -3px 0 var(--ink), -3px -3px 0 var(--ink), 0 5px 0 var(--ink); }
+#combo b { font-size: 46px; color: #ffd23a; }
+#combo.show { opacity: 1; }
+#combo.slamc { animation: slamc .3s cubic-bezier(.2, 1.6, .4, 1); }
+@keyframes slamc { from { transform: rotate(-6deg) scale(1.8); } to { transform: rotate(-6deg) scale(1); } }
+
+/* the fighters' damage, next to yours */
+#foes { display: flex; gap: 10px; margin-bottom: 4px; }
+.chip { display: flex; align-items: center; gap: 6px; padding: 5px 12px 5px 6px; background: rgba(255, 248, 236, .92);
+  border: 3px solid var(--ink); border-radius: 16px; box-shadow: 0 4px 0 var(--ink); transition: opacity .3s, filter .3s; }
+.chip .face { width: 30px; height: 30px; }
+.chip b { font-size: 26px; font-weight: 900; color: #fff;
+  text-shadow: 2px 2px 0 var(--ink), -2px 2px 0 var(--ink), 2px -2px 0 var(--ink), -2px -2px 0 var(--ink), 0 4px 0 var(--ink); }
+.chip small { font-weight: 900; color: var(--ink); }
+.chip .bar { width: 52px; height: 6px; margin-top: 2px; border: 2px solid var(--ink); border-radius: 4px; background: #fff; overflow: hidden; }
+.chip .bar i { display: block; height: 100%; width: 0; background: #7fe05a; transition: width .2s; }
+.chip.down { opacity: .65; transform: rotate(-6deg); }
+.chip.bump { animation: bump .3s; }
+
+/* a cartoon face: a coloured blob with two eyes */
+.face { position: relative; display: inline-block; border-radius: 45% 45% 40% 40%; background: var(--c); border: 3px solid var(--ink); box-sizing: border-box; }
+.face i { position: absolute; top: 34%; width: 24%; height: 32%; background: #fff; border-radius: 50%; border: 1.5px solid var(--ink); box-sizing: border-box; }
+.face i::after { content: ""; position: absolute; left: 25%; top: 30%; width: 50%; height: 50%; background: var(--ink); border-radius: 50%; }
+.face i:first-child { left: 22%; } .face i:last-child { right: 22%; }
+
+/* the score, top right */
+#score { position: absolute; right: 22px; top: 18px; padding: 8px 18px 10px; text-align: center; background: rgba(255, 248, 236, .92);
+  border: 4px solid var(--ink); border-radius: 20px; box-shadow: 0 6px 0 var(--ink); color: var(--ink); }
+#score .big span { display: block; font-size: 46px; font-weight: 900; color: var(--orange); line-height: 1.05; }
+#score .big small { display: block; font-size: 13px; font-weight: 900; letter-spacing: 2px; color: var(--ink); text-shadow: none; }
+#score .row { display: flex; gap: 14px; justify-content: center; margin-top: 6px; font-size: 14px; font-weight: 800; }
+#score.bump { animation: bump .4s; }
+
+/* the controls, bottom right */
+#help { position: absolute; right: 22px; bottom: 20px; display: grid; gap: 5px; padding: 10px 14px; font-size: 13px; font-weight: 700; color: var(--ink);
+  background: rgba(255, 248, 236, .9); border: 3px solid var(--ink); border-radius: 16px; box-shadow: 0 5px 0 var(--ink); transition: opacity .5s, transform .5s; }
+#help.hide { opacity: 0; transform: translateY(20px); }
+
+/* what to do right now: a pill near the bottom */
+#prompt { position: absolute; bottom: 130px; left: 50%; transform: translateX(-50%) scale(.8); opacity: 0; white-space: nowrap;
+  padding: 8px 20px; font-size: 19px; font-weight: 800; color: var(--ink); background: var(--cream); border: 4px solid var(--ink); border-radius: 999px;
+  box-shadow: 0 5px 0 var(--ink); transition: opacity .2s, transform .2s; }
+#prompt.show { opacity: 1; transform: translateX(-50%) scale(1); }
+#prompt.danger { background: #ff5a4a; color: #fff; animation: throb .6s ease-in-out infinite; }
+
+/* the gust warning */
+#wind { position: fixed; top: 22px; left: 50%; transform: translateX(-50%); pointer-events: none; padding: 6px 22px 8px; font-size: 26px; font-weight: 900; color: #fff;
+  background: #5ab8ff; border: 4px solid var(--ink); border-radius: 999px; box-shadow: 0 6px 0 var(--ink); animation: throb 1s ease-in-out infinite; white-space: nowrap; }
+
+/* big pop-up messages */
+#banners { position: fixed; top: 13%; left: 50%; transform: translateX(-50%); pointer-events: none; z-index: 5; }
+.banner { position: absolute; left: 50%; top: 0; transform: translateX(-50%); white-space: nowrap; font-size: 64px; font-weight: 900; color: #fff;
+  animation: slam 1.7s cubic-bezier(.2, 1.4, .4, 1) forwards; }
+.banner.good { color: var(--orange); }
+.banner.bad { color: #ff5a4a; }
+.banner.wave { color: #7fe05a; }
+.banner.unlock { color: #ffd23a; font-size: min(52px, 6vw); }
+
+@keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes throb { 50% { transform: translateX(var(--tx, 0)) scale(1.06); } }
+#wind, #prompt.danger { --tx: -50%; }
+@keyframes bump { 40% { transform: scale(1.25) rotate(-4deg); } }
+@keyframes shake { 20% { transform: translate(-6px, 2px) rotate(-3deg); } 40% { transform: translate(6px, -2px) rotate(3deg); }
+  60% { transform: translate(-4px, 1px); } 80% { transform: translate(3px, 0); } }
+@keyframes slam { 0% { transform: translateX(-50%) scale(2.4) rotate(-8deg); opacity: 0; } 15% { transform: translateX(-50%) scale(1) rotate(-4deg); opacity: 1; }
+  75% { transform: translateX(-50%) scale(1.05) rotate(-4deg); opacity: 1; } 100% { transform: translateX(-50%) translateY(-40px) scale(.9) rotate(-4deg); opacity: 0; } }
+
+/* (smaller screens: shrink the title card to fit) */
+/* the title box: as big as fits (sized in ui.js: see fitTitle) */
+@media (max-width: 900px) { #help { display: none; } #bl { flex-direction: column-reverse; align-items: flex-start; } #combo { bottom: 210px; } }
+
+/* ---------------------------------------------------------------- comic words where hits land (fx.js) */
+#comics { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 4; }
+.comic { position: absolute; transform: translate(-50%, -50%) rotate(var(--r)) scale(var(--s)); }
+.comic span { display: block; position: relative; padding: 14px 22px; font-size: 34px; font-weight: 900; letter-spacing: 1px;
+  color: #ff3d2e; white-space: nowrap; animation: comic .9s cubic-bezier(.2, 1.8, .4, 1) forwards; }
+/* (the jagged burst behind the word) */
+.comic span::before { content: ''; position: absolute; inset: -6px -10px; z-index: -1; background: var(--ink);
+  clip-path: polygon(50% 0, 60% 18%, 80% 4%, 78% 26%, 100% 22%, 88% 42%, 100% 56%, 84% 64%, 96% 88%, 72% 78%, 64% 100%, 50% 82%, 36% 100%, 28% 78%, 4% 90%, 14% 64%, 0 52%, 12% 40%, 0 20%, 22% 26%, 20% 4%, 40% 18%); }
+.comic span::after { content: ''; position: absolute; inset: 0 -2px; z-index: -1; background: #ffe14a;
+  clip-path: polygon(50% 4%, 60% 22%, 79% 10%, 76% 30%, 95% 27%, 84% 44%, 95% 56%, 81% 63%, 91% 84%, 70% 75%, 63% 95%, 50% 79%, 37% 95%, 30% 75%, 9% 86%, 17% 63%, 5% 52%, 16% 42%, 5% 25%, 24% 30%, 22% 9%, 41% 22%); }
+.comic span { text-shadow: 3px 3px 0 var(--ink), -3px 3px 0 var(--ink), 3px -3px 0 var(--ink), -3px -3px 0 var(--ink), 0 4px 0 var(--ink); }
+@keyframes comic { 0% { transform: scale(.2); opacity: 1; } 18% { transform: scale(1.15); } 30% { transform: scale(1); } 75% { opacity: 1; } 100% { transform: scale(.85); opacity: 0; } }
+
+/* ---------------------------------------------------------------- dressing up your ragdoll (custom.js) */
+#overlay button.small { display: block; margin: 12px auto 0; font-size: 18px; padding: 8px 26px; background: #fff; box-shadow: 0 5px 0 var(--ink); }
+#overlay button.small:hover { background: #eaf3ff; }
+#custom { display: none; }
+#overlay.custom { background: linear-gradient(90deg, transparent 45%, rgba(20, 30, 60, .35)); justify-content: flex-end; }
+#overlay.custom .box { display: none; }
+#overlay.custom #custom { display: block; margin-right: 6vw; width: 340px; background: var(--cream); border: 5px solid var(--ink); border-radius: 26px;
+  padding: 18px 22px 22px; max-height: calc(100vh - 50px); overflow-y: auto; box-sizing: border-box; box-shadow: 0 10px 0 var(--ink), 0 20px 50px rgba(0, 0, 0, .35); color: var(--ink); animation: pop .4s cubic-bezier(.2, 1.6, .4, 1); }
+#custom h2 { margin: 0 0 6px; font-size: 30px; font-weight: 900; letter-spacing: 2px; text-align: center; transform: rotate(-2deg); }
+#custom h3 { margin: 12px 0 6px; font-size: 14px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; }
+#custom .swatches { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+#custom .swatches button { aspect-ratio: 1; width: 100%; padding: 0; border: 4px solid var(--ink); border-radius: 50%; background: var(--c); box-shadow: 0 3px 0 var(--ink); cursor: pointer; }
+#custom .swatches button.on { transform: scale(1.15); box-shadow: 0 0 0 4px #fff, 0 0 0 7px var(--ink); }
+#custom .opts { display: flex; flex-wrap: wrap; gap: 6px; }
+#custom .opts button { font: 800 14px var(--font); text-transform: capitalize; padding: 6px 12px; border: 3px solid var(--ink); border-radius: 12px;
+  background: #fff; box-shadow: 0 3px 0 var(--ink); cursor: pointer; color: var(--ink); letter-spacing: 0; text-shadow: none; }
+#custom .opts button.on { background: var(--orange); color: #fff; }
+#custom .opts button:hover { background: #ffe9c8; }
+#custom .opts button.on:hover { background: var(--orange); }
+#overlay #customDone { display: block; margin: 20px auto 0; font-size: 24px; padding: 10px 44px; }
+#custom .tabs { display: flex; gap: 6px; margin: 8px 0 2px; }
+#custom .tabs button { flex: 1; font: 900 16px var(--font); letter-spacing: 2px; padding: 7px 0; border: 3px solid var(--ink); border-radius: 12px;
+  background: #fff; color: var(--ink); box-shadow: 0 3px 0 var(--ink); cursor: pointer; text-shadow: none; }
+#custom .tabs button.on { background: var(--blue); color: #fff; }
+#custom .desc { margin: 6px 2px 0; min-height: 1.2em; font-size: 13px; font-weight: 800; color: #e0571a; }
+
+/* "E pick up the boxing gloves" (when you're next to some gear lying about) */
+#lootHint { position: fixed; left: 50%; bottom: 22%; transform: translateX(-50%); padding: 6px 14px; background: #fffbea;
+  border: 3px solid var(--ink); border-radius: 12px; font-weight: bold; font-size: 18px; color: var(--ink); pointer-events: none;
+  box-shadow: 0 4px 0 var(--ink); white-space: nowrap; }
+
+/* locked gear (ring out fighters to unlock it) */
+#custom .opts button.locked { background: #e4e0d6; color: #8a8478; border-style: dashed; }
+#custom .opts button.locked:hover { background: #e4e0d6; }
+#custom .opts button.locked small { font-size: 11px; margin-left: 4px; }
+#custom .unlockNote { margin: 4px 2px 8px; font-size: 13px; font-weight: 800; color: var(--ink); }
+#custom .opts button.shake { animation: shake .35s; }
+
+/* the funny picture (drawn in 3D behind the menus): its comic word. The menus sit over on the right, with the
+   fight on the left */
+#picWord { z-index: 0; --r: -8deg; pointer-events: none; }
+#picWord span { animation: picword .6s cubic-bezier(.2, 1.8, .4, 1) forwards; }   /* (pops in, and stays) */
+@keyframes picword { 0% { transform: scale(.2); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
+#overlay:not(.custom):not(.paused) { background: none; }   /* (the picture's bright enough without darkening) */
+#overlay .box, #overlay #custom { position: relative; z-index: 1; }
+#overlay { justify-content: flex-end; }
+#overlay .box { margin-right: 6vw; }
+
+/* hat and gear buttons with pictures */
+#custom .opts button.pic { position: relative; width: 74px; height: 74px; padding: 4px; display: inline-flex; align-items: center; justify-content: center; }
+#custom .opts button.pic img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+#custom .opts button .nothing { font: 800 14px var(--font); letter-spacing: 1px; color: #b8b0a0; }
+#custom .opts button.on .nothing { color: #fff; }
+#custom .opts button.locked img { filter: grayscale(1) brightness(.7) contrast(.8); opacity: .6; }
+#custom .opts button .lock { position: absolute; left: 0; right: 0; bottom: 2px; font: 800 11px var(--font); font-style: normal; color: var(--ink); text-transform: none; }
+
+/* the CUSTOMIZE and COMBOS buttons, side by side */
+#overlay .smalls { display: flex; flex-wrap: wrap; gap: 10px 12px; justify-content: center; margin-top: 12px; }
+#overlay .smalls button.small { white-space: nowrap; }
+#overlay .smalls button.small { margin: 0; }
+
+/* ---------------------------------------------------------------- the COMBOS page (combos.js) */
+#combosPanel, #controlsPanel, #onlinePanel { display: none; }
+#overlay.combos .box, #overlay.controls .box, #overlay.online .box { display: none; }
+#overlay.combos #combosPanel, #overlay.controls #controlsPanel, #overlay.online #onlinePanel { display: block; position: relative; z-index: 1; margin-right: 6vw; width: 380px; background: var(--cream); border: 5px solid var(--ink);
+  border-radius: 26px; padding: 18px 22px 22px; max-height: calc(100vh - 50px); overflow-y: auto; box-sizing: border-box;
+  box-shadow: 0 10px 0 var(--ink), 0 20px 50px rgba(0, 0, 0, .35); color: var(--ink); animation: pop .4s cubic-bezier(.2, 1.6, .4, 1); }
+#combosPanel h2, #controlsPanel h2, #onlinePanel h2 { margin: 0 0 6px; font-size: 30px; font-weight: 900; letter-spacing: 2px; text-align: center; transform: rotate(-2deg); }
+#combosPanel .note, #controlsPanel .note, #onlinePanel .note { margin: 4px 0 10px; font-size: 13px; font-weight: 800; line-height: 1.9; }
+#combosPanel .list, #controlsPanel .list, #onlinePanel .list { display: grid; gap: 8px; }
+#combosPanel .combo { background: #fff; border: 3px solid var(--ink); border-radius: 14px; padding: 8px 12px; }
+#combosPanel .combo.got { background: #fff6d6; }
+#combosPanel .combo .top { display: flex; justify-content: space-between; align-items: baseline; }
+#combosPanel .combo b { font-size: 18px; font-weight: 900; letter-spacing: 1px; color: #e0571a; }
+#combosPanel .combo .done { font-size: 12px; font-weight: 800; color: #9a9384; }
+#combosPanel .combo.got .done { color: #2f9a44; }
+#combosPanel .combo .keys { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; margin: 6px 0 4px; }
+#combosPanel .combo .keys i { font-style: normal; font-weight: 900; margin: 0 3px; color: #9a9384; }
+#combosPanel .combo kbd.big { background: #ffe9c7; }
+#combosPanel .combo p { margin: 0; font-size: 13px; font-weight: 700; }
+#combosPanel #combosDone, #controlsPanel #controlsDone { display: block; margin: 14px auto 0; }
+
+/* the RESET button: small and quiet, under the others (it goes red when it's asking "are you sure?") */
+#overlay button.tiny { display: block; margin: 12px auto 0; font-size: 13px; letter-spacing: 2px; padding: 5px 16px; border-width: 3px; border-radius: 10px;
+  background: #e9e4d8; color: var(--ink); text-shadow: none; box-shadow: 0 3px 0 var(--ink); animation: none; }
+#overlay button.tiny:hover { background: #ffd9d4; }
+#overlay button.tiny.sure { background: #ff4a4a; color: #fff; }
+
+#combosPanel .combo kbd.big small { font-size: 10px; opacity: .7; margin-left: 3px; }
+
+/* ---------------------------------------------------------------- the CONTROLS page (controls.js) */
+#controlsPanel .list { gap: 4px; }
+#controlsPanel .bind { display: grid; grid-template-columns: 1fr 104px 104px; gap: 6px; align-items: center; font-size: 14px; font-weight: 800; }
+#controlsPanel .bind button { font: 800 13px var(--font); letter-spacing: 0; padding: 3px 4px; border: 3px solid var(--ink); border-radius: 10px;
+  background: #fff; color: var(--ink); text-shadow: none; box-shadow: 0 3px 0 var(--ink); animation: none; cursor: pointer; }
+#controlsPanel .bind button:hover { background: #eaf3ff; }
+#controlsPanel .bind button.empty { color: #b8b0a0; }
+#controlsPanel .bind button.wait { background: var(--orange); color: #fff; animation: throb .8s ease-in-out infinite; }
+#controlsPanel .row { display: flex; justify-content: center; }
+#controlsPanel .note { margin-bottom: 6px; }
+#controlsPanel #bindsReset { margin-top: 8px; }
+#controlsPanel #controlsDone { margin-top: 8px; font-size: 24px; padding: 8px 40px; }
+
+
+/* ---------------------------------------------------------------- the SOUND / MUSIC buttons (sound.js) */
+#overlay .sounds { display: flex; gap: 10px; justify-content: center; }
+#overlay .sounds button.tiny { margin: 12px 0 0; }
+#overlay button.tiny.off { opacity: .6; }
+
+/* ---------------------------------------------------------------- ONLINE 1v1 (net.js) */
+#score .row i { font-style: normal; }
+#onlinePanel .list { grid-template-columns: minmax(0, 1fr); }
+#onlinePanel .list button.small { margin: 0; width: 100%; box-sizing: border-box; padding-left: 10px; padding-right: 10px; }
+#onlinePanel .join { display: flex; gap: 8px; }
+#onlinePanel .join input { flex: 1; min-width: 0; font: 900 22px var(--font); letter-spacing: 6px; text-align: center; text-transform: uppercase;
+  border: 4px solid var(--ink); border-radius: 14px; padding: 6px; color: var(--ink); background: #fff; }
+#onlinePanel .join button.small { width: auto; flex: none; }
+#onlinePanel .join input { box-sizing: border-box; width: 100%; }
+#onlinePanel .note.small { font-size: 12px; line-height: 1.6; color: #6a6458; }
+#onlinePanel #onlineDone { display: block; margin: 14px auto 0; }
+#netStatus { margin: 4px auto 10px; max-width: 560px; font-size: 13px; font-weight: 800; line-height: 1.6; background: #e6f4ff; border: 3px solid var(--ink);
+  border-radius: 12px; padding: 6px 12px; }
+#netStatus.bad { background: #ffe1dc; }
+
+/* ---------------------------------------------------------------- 3, 2, 1, FIGHT! and the end of an online match */
+#countdown { position: fixed; top: 38%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 6; white-space: nowrap;
+  font-weight: 900; color: #fff; text-shadow: 6px 6px 0 var(--ink), -6px 6px 0 var(--ink), 6px -6px 0 var(--ink), -6px -6px 0 var(--ink), 0 10px 0 var(--ink); }
+#countdown.num { font-size: 200px; color: #ffd23a; animation: cdnum 1s ease-out forwards; }
+#countdown.fight { font-size: 150px; color: var(--orange); animation: cdfight .8s ease-out forwards; }
+#countdown.wait { font-size: 34px; letter-spacing: 2px; animation: throb 1.2s ease-in-out infinite; --tx: 0; }
+@keyframes cdnum { 0% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; } 15% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 80% { opacity: 1; } 100% { transform: translate(-50%, -50%) scale(.85); opacity: 0; } }
+@keyframes cdfight { 0% { transform: translate(-50%, -50%) scale(3) rotate(-8deg); opacity: 0; } 20% { transform: translate(-50%, -50%) scale(1) rotate(-4deg); opacity: 1; } 75% { opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.3) rotate(-4deg); opacity: 0; } }
+#matchEnd { position: fixed; inset: 0; z-index: 7; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: radial-gradient(circle, rgba(255, 210, 58, .35), rgba(28, 26, 46, .75)); animation: fadein .3s ease-out; }
+#matchEnd.lose { background: radial-gradient(circle, rgba(255, 74, 58, .3), rgba(28, 26, 46, .8)); }
+#matchEnd .big { font-size: min(190px, 15vw); font-weight: 900; color: #ffd23a; transform: rotate(-4deg);
+  text-shadow: 8px 8px 0 var(--ink), -8px 8px 0 var(--ink), 8px -8px 0 var(--ink), -8px -8px 0 var(--ink), 0 14px 0 var(--ink); }
+#matchEnd.lose .big { color: #ff5a4a; }
+#matchEnd .big { animation: endpop .7s cubic-bezier(.2, 1.6, .4, 1) both; }
+#matchEnd .score { margin-top: 20px; font-size: 64px; font-weight: 900; color: #fff; text-shadow: 4px 4px 0 var(--ink), -4px 4px 0 var(--ink), 4px -4px 0 var(--ink), -4px -4px 0 var(--ink); }
+#matchEnd .sub { margin-top: 14px; font-size: 26px; font-weight: 800; color: #fff; text-shadow: 3px 3px 0 var(--ink); }
+#matchEnd .stars { position: absolute; inset: 0; overflow: hidden; }
+#matchEnd .stars i { position: absolute; top: -40px; width: 22px; height: 22px; background: #ffd23a; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  animation: fall linear forwards; }
+@keyframes endpop { 0% { transform: scale(3) rotate(-12deg); opacity: 0; } 100% { transform: scale(1) rotate(-4deg); opacity: 1; } }
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fall { to { transform: translateY(110vh) rotate(540deg); } }
+
+/* a fighter's style (its colour's way of fighting: see STYLES in custom.js) */
+.chip em { display: block; font-style: normal; font-size: 11px; opacity: 0.85; letter-spacing: 0.5px; text-transform: uppercase; }
+#desc-color b { color: #ffd23a; }
+
+/* your special move's bar (under your damage): fills up as it comes back, glows when it's ready */
+#you .spbar { margin-top: 4px; }
+#you .spbar kbd { font-size: 11px; padding: 0 5px; }
+#you .spbar #spName { font-size: 12px; letter-spacing: 1px; color: #aab; white-space: nowrap; }
+#you .spbar .bar i { background: #8a8fa8; }
+#you .spbar.ready .bar i { background: #ffd23a; box-shadow: 0 0 8px #ffd23a; }
+#you .spbar.ready #spName { color: #ffd23a; }
+
+/* ---------------------------------------------------------------- every menu the same size
+   The title box and all the pages (customize, combos, controls, online) are one size, 600 by 700, and zoomed
+   the same to fit the window (--mz: see fitTitle in ui.js). Anything too long scrolls inside. */
+#overlay .box, #overlay.custom #custom, #overlay.combos #combosPanel, #overlay.controls #controlsPanel, #overlay.online #onlinePanel {
+  width: 600px; height: 700px; max-height: none; box-sizing: border-box; overflow-y: auto; zoom: var(--mz, 1); margin-right: 6vw;
+  border-radius: 28px; padding: 22px 34px 26px; }
+#overlay .box { display: flex; flex-direction: column; justify-content: center; }
+#overlay .box > #play { align-self: center; }
+#overlay .box > .sounds { display: flex; justify-content: center; gap: 10px; }
+#overlay .box > .sounds button.tiny { margin: 12px 0 0; }
+#overlay #custom h2, #combosPanel h2, #controlsPanel h2, #onlinePanel h2 { font-size: 36px; margin-bottom: 10px; }
+#custom .swatches { grid-template-columns: repeat(12, 1fr); gap: 6px; }
+
+/* ---------------------------------------------------------------- the power cards (bottom left)
+   Cartoon stickers: cream, thick ink outline, tipped a little, a big blob in your colour behind your face (with
+   a ring round it that fills up with your POWER), comic dots in the corner, the number fat and outlined. At
+   full power it wobbles and glows gold. The fighters' cards are the same, smaller, in their colours. */
+#you { --pc: #2f7bff; --p: 0; --rc: #5ad1ff;
+  background: #fff8ec; border: 5px solid var(--ink); border-radius: 26px 22px 28px 20px; transform: rotate(-2deg);
+  padding: 14px 22px 10px 12px; gap: 12px; align-items: center; overflow: hidden;
+  box-shadow: 0 8px 0 var(--ink), 0 14px 24px rgba(0, 0, 0, .25); }
+#you::before { content: ""; position: absolute; right: -10px; top: -10px; width: 120px; height: 90px;
+  background: radial-gradient(circle, rgba(28, 26, 46, .14) 2.5px, transparent 3px) 0 0 / 11px 11px; transform: rotate(8deg); }
+#you > .ring, #you > .col { position: relative; z-index: 1; }
+#you .ring { width: 86px; height: 86px; border-radius: 50%; display: grid; place-items: center; border: 4px solid var(--ink);
+  background: conic-gradient(var(--rc) calc(var(--p) * 1%), #fff calc(var(--p) * 1%)); box-shadow: 0 4px 0 var(--ink); }
+#you .ring #youFace { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; border: 4px solid var(--ink);
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, .7) 0 12%, transparent 13%), var(--pc); }
+#you .ring .face { width: 50px; height: 50px; margin: 0; }
+#you .name { z-index: 2; top: -4px; left: 96px; transform: rotate(-4deg); background: #ffd23a; color: var(--ink); font-size: 14px; padding: 3px 12px;
+  border: 4px solid var(--ink); border-radius: 10px; box-shadow: 0 3px 0 var(--ink); }
+#you .num { margin-top: 10px; }
+#you .num span { font-size: 66px; }
+#you .num small { font-size: 32px; }
+#you .dmgbar { color: var(--ink); }
+#you .dmgbar .bar { width: 104px; height: 14px; border: 3px solid var(--ink); background: #fff; border-radius: 8px; }
+#you .dmgbar i { border-radius: 5px; box-shadow: inset 0 3px 0 rgba(255, 255, 255, .45); }
+#you .dmgbar b { color: var(--ink); }
+#you .spbar kbd { background: #ffd23a; }
+#you .spbar .bar i { background: #b8b0a0; }
+#you .spbar #spName { color: #9a9384; }
+#you .spbar.ready .bar i { background: #ffd23a; box-shadow: inset 0 3px 0 rgba(255, 255, 255, .5); }
+#you .spbar.ready #spName { color: #e0571a; animation: ready .5s ease-in-out infinite alternate; }
+@keyframes ready { to { transform: scale(1.12) rotate(-3deg); color: #ff9a2a; } }
+#you.max { background: #fff3c4; animation: wobble .9s ease-in-out infinite; }
+@keyframes wobble { 0%, 100% { transform: rotate(-2deg) scale(1); box-shadow: 0 8px 0 var(--ink), 0 0 0 rgba(255, 210, 58, 0); }
+  50% { transform: rotate(1deg) scale(1.04); box-shadow: 0 8px 0 var(--ink), 0 0 34px 10px rgba(255, 210, 58, .9); } }
+#you.shake { animation: shake .35s; }
+/* the fighters' cards */
+.chip { --fc: #ff4a4a; position: relative; background: #fff8ec; border: 4px solid var(--ink); border-radius: 18px 14px 20px 13px;
+  box-shadow: 0 5px 0 var(--ink); padding: 6px 12px 5px 6px; gap: 8px; transform: rotate(-2deg); overflow: hidden; }
+.chip:nth-child(even) { transform: rotate(2deg); }
+.chip::before { content: ""; position: absolute; right: -6px; top: -6px; width: 50px; height: 40px;
+  background: radial-gradient(circle, rgba(28, 26, 46, .14) 2px, transparent 2.5px) 0 0 / 8px 8px; }
+.chip > * { position: relative; }
+.chip .face { width: 34px; height: 34px; padding: 3px; border: 3px solid var(--ink); border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, .7) 0 12%, transparent 13%), var(--fc); }
+.chip .bar { height: 8px; border-width: 3px; border-radius: 6px; }
+.chip em { color: #e0571a; font-weight: 900; opacity: 1; }
+.chip.down { opacity: .7; transform: rotate(-8deg) translateY(4px); }
+
+/* ---------------------------------------------------------------- slanted banners: ROUND 2, ROUND CLEAR, YOU WIN, YOU LOSE
+   A big stripe slashes across the screen at an angle, the words slide in on it, it holds, then it's gone. */
+#slash { position: fixed; left: 0; right: 0; top: 24%; z-index: 7; pointer-events: none; display: none; }
+#slash .band { position: relative; margin: 0 -10vw; transform: rotate(-6deg); padding: 14px 0 12px; text-align: center; overflow: hidden;
+  background: linear-gradient(#2f7bff, #1f5fd8); border-top: 7px solid var(--ink); border-bottom: 7px solid var(--ink);
+  box-shadow: 0 12px 0 rgba(28, 26, 46, .55); animation: slashin .45s cubic-bezier(.2, 1.4, .4, 1) both; }
+#slash .band::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(-60deg, rgba(255, 255, 255, .1) 0 18px, transparent 18px 40px); }
+#slash .band::after { content: ""; position: absolute; top: 0; bottom: 0; width: 25%; left: -30%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .5), transparent);
+  animation: shine .9s .35s ease-in-out both; }
+@keyframes shine { to { left: 120%; } }
+#slash .main { position: relative; display: inline-block; font-size: min(120px, 11vw); font-weight: 900; font-style: italic; letter-spacing: 4px; color: #fff;
+  text-shadow: 6px 6px 0 var(--ink), -6px 6px 0 var(--ink), 6px -6px 0 var(--ink), -6px -6px 0 var(--ink), 0 10px 0 var(--ink);
+  animation: slashword .55s .1s cubic-bezier(.2, 1.5, .4, 1) both; }
+#slash .sub { position: relative; font-size: min(32px, 3.4vw); font-weight: 900; letter-spacing: 3px; color: #ffd23a;
+  text-shadow: 3px 3px 0 var(--ink), -3px 3px 0 var(--ink), 3px -3px 0 var(--ink), -3px -3px 0 var(--ink); animation: slashword .5s .25s both; }
+#slash.round .band { background: linear-gradient(#ff9a2a, #ea6a12); }
+#slash.round .sub { color: #fff; }
+#slash.win .band { background: linear-gradient(#ffd23a, #ffae1a); }
+#slash.win .main { color: #fff; }
+#slash.win .sub { color: var(--ink); text-shadow: 2px 2px 0 #fff; }
+#slash.lose .band { background: linear-gradient(#ff4a4a, #c42a2a); transform: rotate(5deg); }
+#slash.lose .sub { color: #fff; }
+#slash.out .band { animation: slashout .35s ease-in both; }
+@keyframes slashin { from { transform: rotate(-6deg) translateX(-110%) scaleY(.3); } to { transform: rotate(-6deg) translateX(0) scaleY(1); } }
+#slash.lose .band { animation-name: slashinL; }
+@keyframes slashinL { from { transform: rotate(5deg) translateX(110%) scaleY(.3); } to { transform: rotate(5deg) translateX(0) scaleY(1); } }
+@keyframes slashout { to { transform: rotate(-6deg) translateX(110%) scaleY(.2); opacity: 0; } }
+@keyframes slashword { from { transform: translateX(-60px) skewX(-20deg) scale(1.6); opacity: 0; } to { transform: none; opacity: 1; } }
+#countdown { top: 58%; }
+#matchEnd .big { display: none; }
+#matchEnd { justify-content: flex-end; padding-bottom: 14vh; box-sizing: border-box; }
+
+/* ---------------------------------------------------------------- the small banners, slanted too
+   RING-OUT!, a combo's name, YOU FELL!...: each on its own slanted ribbon (orange for good things, red for bad,
+   gold for an unlock), smaller than the big stripes, flying in from the side. */
+.banner { padding: 4px 46px 8px; font-size: 52px; font-style: italic; letter-spacing: 2px; color: #fff;
+  animation: ribbon 1.7s cubic-bezier(.2, 1.4, .4, 1) forwards; }
+.banner::before { content: ""; position: absolute; inset: 0; z-index: -1; transform: skewX(-18deg) rotate(-4deg);
+  background: repeating-linear-gradient(-60deg, rgba(255, 255, 255, .12) 0 12px, transparent 12px 26px), linear-gradient(#2f7bff, #1f5fd8);
+  border: 6px solid var(--ink); border-radius: 10px; box-shadow: 0 8px 0 rgba(28, 26, 46, .55); }
+.banner.good, .banner.bad, .banner.wave, .banner.unlock { color: #fff; }
+.banner.good::before { background: repeating-linear-gradient(-60deg, rgba(255, 255, 255, .14) 0 12px, transparent 12px 26px), linear-gradient(#ff9a2a, #ea6a12); }
+.banner.bad::before { background: repeating-linear-gradient(-60deg, rgba(255, 255, 255, .12) 0 12px, transparent 12px 26px), linear-gradient(#ff4a4a, #c42a2a); transform: skewX(18deg) rotate(4deg); }
+.banner.wave::before { background: repeating-linear-gradient(-60deg, rgba(255, 255, 255, .14) 0 12px, transparent 12px 26px), linear-gradient(#7fe05a, #3fb03a); }
+.banner.unlock::before { background: repeating-linear-gradient(-60deg, rgba(255, 255, 255, .2) 0 12px, transparent 12px 26px), linear-gradient(#ffd23a, #ffae1a); }
+.banner.unlock { font-size: min(44px, 5vw); }
+@keyframes ribbon {
+  0% { transform: translateX(-160%) rotate(-4deg); opacity: 0; }
+  14% { transform: translateX(-50%) rotate(-4deg) scale(1.08); opacity: 1; }
+  22% { transform: translateX(-50%) rotate(-4deg) scale(1); }
+  85% { transform: translateX(-50%) rotate(-4deg); opacity: 1; }
+  100% { transform: translateX(60%) rotate(-4deg); opacity: 0; } }
+.banner.bad { animation-name: ribbonR; }
+@keyframes ribbonR {
+  0% { transform: translateX(60%) rotate(4deg); opacity: 0; }
+  14% { transform: translateX(-50%) rotate(4deg) scale(1.08); opacity: 1; }
+  22% { transform: translateX(-50%) rotate(4deg) scale(1); }
+  85% { transform: translateX(-50%) rotate(4deg); opacity: 1; }
+  100% { transform: translateX(-160%) rotate(4deg); opacity: 0; } }
+
+/* ---------------------------------------------------------------- the menus' headings: slanted ribbons too
+   Each page's title sits on a slanted striped ribbon (a colour each), like the banners in the game; and the
+   little headings inside (COLOUR, HAT…) are small slanted tags. */
+#overlay #custom h2, #combosPanel h2, #controlsPanel h2, #onlinePanel h2 {
+  position: relative; display: block; width: fit-content; margin: 4px auto 18px; padding: 6px 40px 10px; z-index: 0;
+  font-size: 40px; font-style: italic; color: #fff; transform: rotate(-3deg);
+  text-shadow: 4px 4px 0 var(--ink), -4px 4px 0 var(--ink), 4px -4px 0 var(--ink), -4px -4px 0 var(--ink), 0 6px 0 var(--ink);
+  animation: menuribbon .5s .05s cubic-bezier(.2, 1.5, .4, 1) both; }
+#overlay #custom h2::before, #combosPanel h2::before, #controlsPanel h2::before, #onlinePanel h2::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; transform: skewX(-16deg); border: 5px solid var(--ink); border-radius: 10px;
+  box-shadow: 0 7px 0 var(--ink);
+  background: repeating-linear-gradient(-60deg, rgba(255, 255, 255, .14) 0 12px, transparent 12px 26px), linear-gradient(#2f7bff, #1f5fd8); }
+#overlay #custom h2::before { background: repeating-linear-gradient(-60deg, rgba(255, 255, 255, .14) 0 12px, transparent 12px 26px), linear-gradient(#ff5fb0, #e0388a); }
+#combosPanel h2::before { background: repeating-linear-gradient(-60deg, rgba(255, 255, 255, .14) 0 12px, transparent 12px 26px), linear-gradient(#ff9a2a, #ea6a12); }
+#controlsPanel h2::before { background: repeating-linear-gradient(-60deg, rgba(255, 255, 255, .14) 0 12px, transparent 12px 26px), linear-gradient(#7fe05a, #3fb03a); }
+#onlinePanel h2::before { background: repeating-linear-gradient(-60deg, rgba(255, 255, 255, .14) 0 12px, transparent 12px 26px), linear-gradient(#a45cff, #7a38d8); }
+@keyframes menuribbon { from { transform: translateX(-80px) rotate(-3deg) scale(1.4); opacity: 0; } to { transform: rotate(-3deg); opacity: 1; } }
+/* PAUSED */
+#overlay.paused .pausedOnly::before { position: relative; width: fit-content; margin: 0 auto 12px; padding: 4px 34px 8px; font-size: 38px; font-style: italic; color: #fff;
+  transform: rotate(-3deg) skewX(-14deg); background: repeating-linear-gradient(-60deg, rgba(255, 255, 255, .14) 0 12px, transparent 12px 26px), linear-gradient(#ff4a4a, #c42a2a);
+  border: 5px solid var(--ink); border-radius: 10px; box-shadow: 0 7px 0 var(--ink);
+  text-shadow: 3px 3px 0 var(--ink), -3px 3px 0 var(--ink), 3px -3px 0 var(--ink), -3px -3px 0 var(--ink), 0 5px 0 var(--ink); }
+/* the little headings: small slanted tags */
+#custom h3 { display: inline-block; margin: 16px 0 8px; padding: 3px 14px 4px; background: var(--ink); color: #fff; font-size: 13px;
+  transform: skewX(-12deg) rotate(-2deg); border-radius: 5px; box-shadow: 3px 3px 0 #ffd23a; }
+
+/* ---------------------------------------------------------------- the colours to pick: little character cards
+   The same as the fighters' cards in the game: a cream sticker, tipped a little, the face on a blob of its colour,
+   and its special move underneath. The one you've picked pops up, gold. */
+#custom .ccards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px 10px; margin: 4px 0 2px; }
+#custom .ccard { --fc: #2f7bff; position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px 6px; overflow: hidden;
+  background: #fff8ec; border: 4px solid var(--ink); border-radius: 16px 12px 18px 11px; box-shadow: 0 5px 0 var(--ink); cursor: pointer;
+  transform: rotate(var(--tilt)); transition: transform .15s; font: inherit; color: var(--ink); }
+#custom .ccard::before { content: ""; position: absolute; right: -6px; top: -6px; width: 44px; height: 34px;
+  background: radial-gradient(circle, rgba(28, 26, 46, .14) 2px, transparent 2.5px) 0 0 / 8px 8px; }
+#custom .ccard > * { position: relative; }
+#custom .ccard .face { width: 44px; height: 44px; padding: 4px; border: 3px solid var(--ink); border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, .7) 0 12%, transparent 13%), var(--fc); }
+#custom .ccard em { font-style: normal; font-weight: 900; font-size: 11px; letter-spacing: .5px; color: #e0571a; white-space: nowrap; }
+#custom .ccard:hover { transform: rotate(var(--tilt)) translateY(-3px); background: #fff; }
+#custom .ccard.on { background: #fff3c4; transform: rotate(0deg) scale(1.1); z-index: 1; box-shadow: 0 5px 0 var(--ink), 0 0 0 4px #ffd23a, 0 0 18px 4px rgba(255, 210, 58, .8); }
+#custom .ccard.on em { color: var(--ink); }
+#overlay #custom .ccard { text-shadow: none; letter-spacing: 0; padding: 8px 4px 6px; animation: none; }
+#overlay #custom .ccard em { text-shadow: none; }
+#desc-color b { color: var(--ink); }
+
+/* ---------------------------------------------------------------- what each choice is (under the colours, the hats, the gear)
+   A speech bubble: white, thick outline, a little tail pointing up at the choices; a slanted tag saying what
+   it's about, the name big, then a line about it. Red when it's locked. */
+#custom .desc.info { position: relative; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-height: 0;
+  margin: 14px 0 4px; padding: 12px 16px 10px; background: #fff; border: 4px solid var(--ink); border-radius: 16px;
+  box-shadow: 0 5px 0 var(--ink); color: var(--ink); font-size: 14px; font-weight: 700; line-height: 1.35; }
+#custom .desc.info::before { content: ""; position: absolute; top: -14px; left: 34px; width: 20px; height: 20px; background: #fff;
+  border-left: 4px solid var(--ink); border-top: 4px solid var(--ink); transform: rotate(45deg); border-radius: 4px 0 0 0; }
+#custom .desc.info .tag { position: absolute; top: -13px; right: 14px; padding: 1px 10px 2px; background: #ffd23a; border: 3px solid var(--ink);
+  border-radius: 6px; font-size: 11px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; transform: skewX(-10deg) rotate(2deg); }
+#custom .desc.info .tag kbd { font-size: 10px; padding: 0 4px; border-bottom-width: 2px; transform: skewX(10deg); }
+#custom .desc.info b { font-size: 20px; font-weight: 900; font-style: italic; letter-spacing: 1px; color: #e0571a; }
+#custom .desc.info .txt { flex-basis: 100%; }
+#custom .desc.info.locked { background: #ffe9e6; }
+#custom .desc.info.locked::before { background: #ffe9e6; }
+#custom .desc.info.locked b { color: #d8352a; }
+#custom .desc.info.pop { animation: infopop .3s cubic-bezier(.2, 1.6, .4, 1); }
+@keyframes infopop { from { transform: scale(.92); } to { transform: scale(1); } }
+#custom .unlockNote { margin: 14px 0 6px; padding: 8px 14px; background: #fff3c4; border: 3px dashed var(--ink); border-radius: 12px; font-size: 14px; transform: rotate(-1deg); }
+#custom .unlockNote b { display: inline-block; margin-left: 4px; padding: 0 10px; background: #ff9a2a; color: #fff; border: 3px solid var(--ink); border-radius: 8px; font-size: 16px; }
+
+/* the small banners: the same as the big slanted stripe (all the way across, the same tilt), just thinner */
+#banners { left: 0; right: 0; transform: none; }
+.banner { left: -10vw; right: -10vw; transform: rotate(-6deg); text-align: center; padding: 6px 0 10px; font-size: 54px; }
+.banner::before { transform: none; border: 0; border-top: 6px solid var(--ink); border-bottom: 6px solid var(--ink); border-radius: 0; }
+.banner.bad::before { transform: none; }
+@keyframes ribbon {
+  0% { transform: rotate(-6deg) translateX(-110%) scaleY(.3); opacity: 1; }
+  14% { transform: rotate(-6deg) translateX(0) scaleY(1.05); }
+  22% { transform: rotate(-6deg) translateX(0) scaleY(1); }
+  85% { transform: rotate(-6deg) translateX(0); opacity: 1; }
+  100% { transform: rotate(-6deg) translateX(110%) scaleY(.3); opacity: 0; } }
+@keyframes ribbonR {
+  0% { transform: rotate(5deg) translateX(110%) scaleY(.3); opacity: 1; }
+  14% { transform: rotate(5deg) translateX(0) scaleY(1.05); }
+  22% { transform: rotate(5deg) translateX(0) scaleY(1); }
+  85% { transform: rotate(5deg) translateX(0); opacity: 1; }
+  100% { transform: rotate(5deg) translateX(-110%) scaleY(.3); opacity: 0; } }
+
+/* ---------------------------------------------------------------- size cards, and stat bars */
+#custom .sizes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; align-items: end; }
+#custom .ccard.size { justify-content: flex-end; min-height: 104px; }
+#custom .ccard.size .face { width: calc(50px * var(--z)); height: calc(50px * var(--z)); }
+#custom .ccard.size em { font-size: 14px; letter-spacing: 1px; }
+/* the bars: the middle line is normal; green and longer is better than normal, red and shorter is worse */
+#custom .desc.info .stats { flex-basis: 100%; display: grid; gap: 5px; margin-top: 8px; }
+#custom .st { display: grid; grid-template-columns: 82px 1fr 50px; align-items: center; gap: 8px; font-size: 12px; font-weight: 900; letter-spacing: .5px; text-transform: uppercase; }
+#custom .st .sb { position: relative; height: 14px; background: #eee8da; border: 3px solid var(--ink); border-radius: 8px; overflow: hidden; transform: skewX(-12deg); }
+#custom .st .sb i { position: absolute; left: 0; top: 0; bottom: 0; background: #b8b0a0; border-radius: 0 5px 5px 0; box-shadow: inset 0 3px 0 rgba(255, 255, 255, .45);
+  animation: barin .5s cubic-bezier(.2, 1.4, .4, 1) both; }
+#custom .st .sb u { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 3px; margin-left: -1px; background: var(--ink); opacity: .55; }
+#custom .st.up .sb i { background: #5fd04a; }
+#custom .st.down .sb i { background: #ff5a4a; }
+#custom .st .v { text-align: right; color: #9a9384; }
+#custom .st.up .v { color: #2f9a44; }
+#custom .st.down .v { color: #d8352a; }
+@keyframes barin { from { width: 0; } }
+
+/* ---------------------------------------------------------------- the title screen, laid out
+   Top to bottom: the logo; what to do, on a slanted ribbon; a big PLAY; the four pages as four equal buttons
+   (each with a stripe in its page's colour); four quick tips, numbered; then sound, music, reset. (The full
+   list of keys is on the CONTROLS page, and in the corner while you play.) */
+#overlay .box { justify-content: space-between; padding: 30px 40px 24px; }
+#overlay h1 { margin: 6px 0 0; font-size: 70px; }
+#overlay h1 .w2 { font-size: 84px; }
+#overlay .tag { position: relative; z-index: 0; width: fit-content; margin: 18px auto 0; padding: 4px 26px 6px; font-size: 18px; font-weight: 900; font-style: italic; color: #fff;
+  transform: rotate(-2deg); text-shadow: 2px 2px 0 var(--ink), -2px 2px 0 var(--ink), 2px -2px 0 var(--ink), -2px -2px 0 var(--ink); }
+#overlay .tag::before { content: ""; position: absolute; inset: 0; z-index: -1; transform: skewX(-14deg); border: 4px solid var(--ink); border-radius: 8px;
+  background: repeating-linear-gradient(-60deg, rgba(255, 255, 255, .14) 0 10px, transparent 10px 22px), linear-gradient(#2f7bff, #1f5fd8); box-shadow: 0 5px 0 var(--ink); }
+#overlay .box > #play { align-self: stretch; margin: 20px 0 0; padding: 14px 0; font-size: 46px; letter-spacing: 8px; border-radius: 22px; }
+#overlay .smalls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+#overlay .smalls button.small { position: relative; width: 100%; margin: 0; padding: 12px 0 12px 14px; font-size: 19px; letter-spacing: 2px; text-align: center;
+  color: var(--ink); text-shadow: none; background: #fff; border: 4px solid var(--ink); border-left-width: 14px; border-radius: 14px; box-shadow: 0 5px 0 var(--ink); }
+#overlay .smalls #customize { border-left-color: #ff5fb0; }
+#overlay .smalls #combosBtn { border-left-color: #ff9a2a; }
+#overlay .smalls #controlsBtn { border-left-color: #5fd04a; }
+#overlay .smalls #onlineBtn { border-left-color: #a45cff; }
+#overlay .smalls button.small:hover { background: #fff3c4; transform: translateY(-2px); }
+#overlay .how { grid-template-columns: 1fr 1fr; gap: 8px 10px; margin: 20px 0 0; }
+#overlay .how div { align-items: flex-start; gap: 9px; padding: 8px 10px; font-size: 13px; line-height: 1.3; border-width: 3px; border-radius: 12px; background: rgba(255, 255, 255, .7); border-style: dashed; }
+#overlay .how i { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); color: #ffd23a; font-style: normal; font-weight: 900; font-size: 13px; }
+#overlay .keys#keyList { display: none; }
+#overlay .box > .sounds { margin-top: 16px; }
+#overlay .box > .sounds button.tiny { margin: 0; }
+#overlay #loading { margin: 20px 0 0; font-size: 22px; font-weight: 900; }
+/* paused: the score under the PAUSED ribbon, no tips */
+#overlay.paused .how { display: none; }
+#overlay .box { padding: 22px 40px 20px; }
+#overlay h1 { margin: 0; font-size: 62px; }
+#overlay h1 .w2 { font-size: 76px; }
+#overlay .tag { margin-top: 12px; }
+#overlay .box > #play { margin-top: 16px; padding: 8px 0; font-size: 42px; }
+#overlay .smalls { margin-top: 14px; gap: 10px; }
+#overlay .smalls button.small { padding: 9px 0 9px 14px; }
+#overlay .how { margin-top: 14px; gap: 7px 10px; }
+#overlay .how div { padding: 6px 10px; font-size: 12.5px; }
+#overlay .box > .sounds { margin-top: 14px; }
+
+/* ---------------------------------------------------------------- buttons, again: slanted and chunky
+   Every button in the menus leans like the banners do, filled with colour, the words white with a thick
+   outline. PLAY (and RESUME, DONE): orange. The four pages: each in its own colour (customize pink, combos
+   orange, controls green, online purple). Other small ones: blue. Sound, music and reset: little cream ones. */
+@keyframes throbS { 50% { transform: skewX(-8deg) scale(1.04); } }
+#overlay button { transform: skewX(-8deg); border-radius: 14px; animation: none;
+  background: linear-gradient(#ffb347, #ff8a1a); color: #fff; border: 5px solid var(--ink); box-shadow: 0 7px 0 var(--ink);
+  text-shadow: 3px 3px 0 var(--ink), -3px 3px 0 var(--ink), 3px -3px 0 var(--ink), -3px -3px 0 var(--ink), 0 5px 0 var(--ink); }
+#overlay button:hover { background: linear-gradient(#ffc56a, #ff9a2a); transform: skewX(-8deg) translateY(-3px); }
+#overlay button:active { transform: skewX(-8deg) translateY(5px); box-shadow: 0 2px 0 var(--ink); }
+#overlay .box > #play { animation: throbS 1.4s ease-in-out infinite; }
+#overlay .box > #play:hover { animation: none; }
+#overlay .smalls { gap: 16px 20px; margin: 18px 6px 0; }
+#overlay button.small, #overlay .smalls button.small { color: #fff; font-size: 20px; letter-spacing: 2px; padding: 10px 0; border: 4px solid var(--ink); border-radius: 12px;
+  box-shadow: 0 6px 0 var(--ink); background: linear-gradient(#5aa2ff, #2f7bff);
+  text-shadow: 2px 2px 0 var(--ink), -2px 2px 0 var(--ink), 2px -2px 0 var(--ink), -2px -2px 0 var(--ink), 0 4px 0 var(--ink); }
+#overlay button.small:hover { background: linear-gradient(#7ab6ff, #4a8cff); }
+#overlay .smalls #customize { background: linear-gradient(#ff8ac8, #ff4fa6); }
+#overlay .smalls #combosBtn { background: linear-gradient(#ffb347, #ff8a1a); }
+#overlay .smalls #controlsBtn { background: linear-gradient(#8fe86a, #45bd3a); }
+#overlay .smalls #onlineBtn { background: linear-gradient(#c08aff, #9248f0); }
+#overlay .smalls button.small:hover { filter: brightness(1.08); }
+#overlay button.tiny { transform: skewX(-8deg); color: var(--ink); text-shadow: none; background: #f4efe2; border: 3px solid var(--ink); box-shadow: 0 3px 0 var(--ink); }
+#overlay button.tiny:hover { background: #fff; transform: skewX(-8deg) translateY(-2px); }
+#overlay button.tiny.sure { background: #ff4a4a; color: #fff; }
+#overlay .box > .sounds { gap: 14px; margin-top: 22px; }
+/* (the picks in customize, the key boxes and the tabs aren't slanted buttons: they keep their own look) */
+#overlay #custom .opts button, #overlay #custom .ccard, #overlay #custom .tabs button, #overlay #controlsPanel .bind button { transform: none; text-shadow: none; animation: none; }
+#overlay #custom .opts button { background: #fff; color: var(--ink); box-shadow: 0 3px 0 var(--ink); }
+#overlay #custom .opts button.on { background: var(--orange); color: #fff; }
+#overlay #custom .opts button.locked { background: #e4e0d6; color: #8a8478; }
+#overlay #custom .tabs button { background: #fff; color: var(--ink); box-shadow: 0 3px 0 var(--ink); }
+#overlay #custom .tabs button.on { background: var(--blue); color: #fff; }
+#overlay #custom .ccard { background: #fff8ec; color: var(--ink); }
+#overlay #custom .ccard.on { background: #fff3c4; transform: none; }
+#overlay #custom .ccard:hover { transform: translateY(-3px); }
+#overlay #controlsPanel .bind button { background: #fff; color: var(--ink); box-shadow: none; }
+#overlay #controlsPanel .bind button.wait { background: var(--orange); color: #fff; }
+/* (the controls page: a little tighter, so DONE fits) */
+#controlsPanel .list { gap: 5px; }
+#controlsPanel .bind button { padding: 2px 4px; }
+#controlsPanel .note { margin-bottom: 6px; }
+#overlay .box { justify-content: space-evenly; }
+#overlay .box > #play { margin-top: 0; }
+#controlsPanel .list { gap: 3px; }
+#controlsPanel .bind { font-size: 13px; }
+#controlsPanel #controlsDone { margin-top: 10px; }
+#controlsPanel .row { margin-top: 8px; }
+/* the logo: BRAWL sits under RAGDOLL, not over it */
+#overlay h1 { line-height: 1.05; }
+#overlay h1 .w2 { margin-top: 4px; }
+/* the info bubbles' labels (HAT, SIZE, SPECIAL MOVE...): inside the bubble, on the same line as the name, at
+   the right, so they don't stick out over the buttons above */
+#custom .desc.info { align-items: center; margin-top: 16px; }
+#custom .desc.info b { order: 1; }
+#custom .desc.info .tag { order: 2; position: static; margin-left: auto; transform: skewX(-10deg); white-space: nowrap; }
+#custom .desc.info .txt { order: 3; }
+#custom .desc.info .stats { order: 4; }
+/* (those labels share a name with the title's "Knock them all off..." ribbon: undo that ribbon's look on them) */
+#overlay #custom .desc.info .tag { width: auto; margin: 0 0 0 auto; padding: 2px 10px 3px; font-size: 11px; font-weight: 900; font-style: normal; letter-spacing: 1px;
+  color: var(--ink); text-shadow: none; background: #ffd23a; border: 3px solid var(--ink); border-radius: 6px; box-shadow: 0 2px 0 var(--ink); transform: skewX(-10deg); z-index: auto; }
+#overlay #custom .desc.info .tag::before { display: none; }
+
+/* ---------------------------------------------------------------- the title screen (START / NEW GAME)
+   The same size and place as every menu: the logo big, the line under it on a ribbon, two big slanted buttons. */
+#splash { display: none; }
+#overlay.splash .box { display: none; }
+#overlay.splash #splash { display: flex; flex-direction: column; align-items: stretch; justify-content: center; gap: 26px; position: relative; z-index: 1;
+  width: 600px; height: 700px; box-sizing: border-box; padding: 40px 50px; zoom: var(--mz, 1); margin-right: 6vw;
+  background: var(--cream); border: 5px solid var(--ink); border-radius: 28px; box-shadow: 0 12px 0 var(--ink), 0 20px 50px rgba(0, 0, 0, .35);
+  color: var(--ink); text-align: center; animation: pop .5s cubic-bezier(.2, 1.6, .4, 1); }
+#splash h1 { margin: 0 0 6px; font-size: 92px; line-height: 1.05; }
+#splash h1 .w2 { font-size: 112px; margin-top: 4px; }
+#splash .splashTag { position: relative; z-index: 0; align-self: center; margin: 0 0 18px; padding: 6px 30px 8px; font-size: 22px; font-weight: 900; font-style: italic; color: #fff;
+  transform: rotate(-2deg); text-shadow: 2px 2px 0 var(--ink), -2px 2px 0 var(--ink), 2px -2px 0 var(--ink), -2px -2px 0 var(--ink); }
+#splash .splashTag::before { content: ""; position: absolute; inset: 0; z-index: -1; transform: skewX(-14deg); border: 4px solid var(--ink); border-radius: 8px;
+  background: repeating-linear-gradient(-60deg, rgba(255, 255, 255, .14) 0 10px, transparent 10px 22px), linear-gradient(#2f7bff, #1f5fd8); box-shadow: 0 5px 0 var(--ink); }
+#overlay #splash button { margin: 0; padding: 16px 0; font-size: 50px; letter-spacing: 8px; }
+#overlay #splash #startBtn { animation: throbS 1.4s ease-in-out infinite; }
+#overlay #splash #startBtn:hover { animation: none; }
+#overlay #splash #newBtn { font-size: 34px; letter-spacing: 4px; padding: 12px 0; background: linear-gradient(#5aa2ff, #2f7bff); }
+#overlay #splash #newBtn.sure { background: linear-gradient(#ff7a6a, #ff3a2a); font-size: 28px; }
+#splash .splashNote { margin: 4px 0 0; font-size: 15px; font-weight: 800; color: #6a6478; min-height: 2.6em; }
+
+/* ---------------------------------------------------------------- name tags (online): over each player's head */
+#nametags { position: fixed; inset: 0; pointer-events: none; z-index: 4; }
+#nametags .nt { position: absolute; transform: translate(-50%, -100%) skewX(-8deg); padding: 2px 12px 4px; white-space: nowrap;
+  font-size: 18px; font-weight: 900; letter-spacing: 1px; color: #fff; border: 3px solid var(--ink); border-radius: 8px; box-shadow: 0 4px 0 var(--ink);
+  text-shadow: 2px 2px 0 var(--ink), -2px 2px 0 var(--ink), 2px -2px 0 var(--ink), -2px -2px 0 var(--ink); }
+#nametags .nt.me { background: linear-gradient(#5aa2ff, #2f7bff); }
+#nametags .nt.them { background: linear-gradient(#ff7a6a, #ff3a2a); }
+#onlinePanel .nameRow { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 14px; letter-spacing: 1px; }
+#onlinePanel .nameRow input { flex: 1; min-width: 0; font: 900 20px var(--font); letter-spacing: 2px; text-transform: uppercase; padding: 6px 10px;
+  border: 4px solid var(--ink); border-radius: 12px; background: #fff; color: var(--ink); }
+
+/* the title screen, till its brawl is ready: just sky (not a far-off look at the island first) */
+#overlay::before { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity .8s;
+  background: linear-gradient(#3d8bff, #bfe8ff); }
+#overlay.splash.wait::before { opacity: 1; transition: none; }

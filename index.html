@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Ragdoll Brawl</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="hud" class="hidden">
+  <!-- you: your power, big, bottom left (and your damage, a bar under it) -->
+  <div id="bl">
+  <div id="you"><div class="ring"><span id="youFace"></span></div>
+    <div class="col"><div class="num"><span id="pow">0</span><small>%</small></div>
+      <div class="dmgbar"><span>DAMAGE</span><div class="bar"><i id="dmgfill"></i></div><b id="dmg">0%</b></div>
+      <div class="dmgbar spbar" id="spBar"><span id="spKey"></span><div class="bar"><i id="spFill"></i></div><b id="spName"></b></div></div>
+    <div class="name">POWER</div></div>
+  <!-- the combo you're on -->
+  <div id="combo"></div>
+  <!-- them: a chip each -->
+  <div id="foes"></div>
+  </div>
+  <!-- the score, top right -->
+  <div id="score">
+    <div class="big"><span id="kos">0</span><small>RING-OUTS</small></div>
+    <div class="row"><span><i id="waveLabel">Wave</i> <b id="wave">1</b></span><span>Falls <b id="falls">0</b></span></div>
+  </div>
+  <!-- the controls, bottom right (H to show or hide; filled in by controls.js, with your keys) -->
+  <div id="help"></div>
+  <div id="prompt"></div>
+</div>
+<div id="wind" style="display:none"><span class="label">GUST!</span></div>
+<div id="comics"></div>
+<div id="nametags" style="display:none"></div>
+<div id="lootHint" style="display:none"></div>
+<div id="banners"></div>
+<div id="countdown"></div>
+<div id="slash"></div>
+<div id="matchEnd" style="display:none"></div>
+
+<div id="overlay" class="splash wait">
+  <!-- the funny picture's comic word (the picture itself is drawn in 3D behind the menus: see pictures.js) -->
+  <div id="picWord" class="comic" style="display:none"></div>
+  <div class="box">
+    <h1><span class="w1">RAGDOLL</span><span class="w2">BRAWL</span></h1>
+    <p class="tag" id="modeTag">Knock them all off the sky island!</p>
+    <p class="pausedOnly" id="pauseScore"></p>
+    <p id="loading">Loading…</p>
+    <p id="netStatus" style="display:none"></p>
+    <button id="play" style="display:none">PLAY</button>
+    <div class="smalls"><button id="customize" class="small" style="display:none">CUSTOMIZE</button><button id="combosBtn" class="small" style="display:none">COMBOS</button><button id="controlsBtn" class="small">CONTROLS</button><button id="onlineBtn" class="small">ONLINE 1v1</button></div>
+    <div class="keys" id="keyList"></div>
+    <div class="sounds"><button id="sfxBtn" class="tiny"></button><button id="musicBtn" class="tiny"></button></div>
+  </div>
+  <!-- the title screen: the first thing you see -->
+  <div id="splash">
+    <h1><span class="w1">RAGDOLL</span><span class="w2">BRAWL</span></h1>
+    <p class="splashTag">Knock them all off the sky island!</p>
+    <button id="startBtn">START</button>
+    <button id="newBtn">NEW GAME</button>
+    <p class="splashNote" id="splashNote">START carries on where you left off. NEW GAME starts again from nothing.</p>
+  </div>
+  <div id="custom"></div>
+  <div id="combosPanel"></div>
+  <div id="controlsPanel"></div>
+  <div id="onlinePanel"></div>
+</div>
+
+<script src="three.min.js"></script>
+<script src="js/lib/GLTFLoader.js"></script>
+<!-- plain scripts sharing globals, in dependency order -->
+<script src="js/core.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/world.js"></script>
+<script src="js/props.js"></script>
+<script src="js/body.js"></script>
+<script src="js/player.js"></script>
+<script src="js/fighters.js"></script>
+<script src="js/nature.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/custom.js"></script>
+<script src="js/loot.js"></script>
+<script src="js/combos.js"></script>
+<script src="js/specials.js"></script>
+<script src="js/allies.js"></script>
+<script src="js/controls.js"></script>
+<script src="js/net.js"></script>
+<script src="js/pictures.js"></script>
+<script src="js/crowd.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
