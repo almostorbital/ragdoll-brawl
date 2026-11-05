@@ -64,7 +64,7 @@ addEventListener('touchmove', e => {
       continue;
     }
     const L = TOUCH.look.get(t.identifier);
-    if (L) { mouse.dx += (t.clientX - L.x) * 1.8; mouse.dy += (t.clientY - L.y) * 1.8; L.x = t.clientX; L.y = t.clientY; }
+    if (L) { mouse.dx += (t.clientX - L.x) * 1.8; mouse.dy += (t.clientY - L.y) * 1.8; L.x = t.clientX; L.y = t.clientY; TOUCH.lookedAt = performance.now(); }
   }
 }, { passive: false });
 function touchUp(e) {
@@ -101,6 +101,14 @@ function updateTouch() {
     TOUCH.wasStick = !!S;
   }
   $('touch').classList.toggle('playing', playing);
+  // the camera follows where you're facing: swinging round behind you (faster while you're moving). Not while
+  // you're dragging to look about yourself, or for a moment after.
+  const now = performance.now(), dt = Math.min(0.05, (now - (TOUCH.lastT || now)) / 1000); TOUCH.lastT = now;
+  if (playing && !TOUCH.look.size && now - (TOUCH.lookedAt || 0) > 1500 && !playerBody.limp && !P.hang) {
+    let d = P.yaw - cam.yaw; d = Math.atan2(Math.sin(d), Math.cos(d));
+    const moving = Math.hypot(P.vel.x, P.vel.z) > 0.6;
+    cam.yaw += d * (1 - Math.exp(-(moving ? 2.5 : 1) * dt));
+  }
   const pick = document.querySelector('#touch .pickup');
   if (pick) pick.style.display = $('lootHint').style.display === 'none' ? 'none' : '';
 }
