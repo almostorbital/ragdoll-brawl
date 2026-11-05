@@ -78,7 +78,10 @@ function touchUp(e) {
 addEventListener('touchend', touchUp);
 addEventListener('touchcancel', touchUp);
 
+// (a touch screen: on from the start, menus and online included, not only once it's been touched)
+if (matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0 && !matchMedia('(pointer: fine)').matches) addEventListener('load', () => turnOnTouch());
 function turnOnTouch() {
+  if (TOUCH.on) return;
   TOUCH.on = true;
   if (!$('touch')) buildTouch();
   document.body.classList.add('touch');

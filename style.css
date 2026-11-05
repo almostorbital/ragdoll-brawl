@@ -722,3 +722,6 @@ body.touch #foes { position: fixed; top: 10px; left: 50%; transform: translateX(
   #touch .pickup { right: 260px; bottom: 18px; }
   #tPause { width: 48px; height: 48px; }
 }
+
+/* (on a phone: the name tags smaller) */
+@media (max-height: 520px) { #nametags .nt { font-size: 11px; padding: 1px 7px 2px; border-width: 2px; } }
