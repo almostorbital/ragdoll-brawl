@@ -29,8 +29,15 @@ function spawnSpot() {
 }
 
 // ---------------------------------------------------------------- talking to the server
+// Two ways to connect. From this computer's own server (node server.js, port 8767): through it, as a relay.
+// Anywhere else (like the game on GitHub Pages): straight from one computer to the other (WebRTC, with the
+// PeerJS library: its free public server just introduces them). The room's host takes the name
+// ragdollbrawl-CODE, and whoever comes second connects to that. Either way, the rest of this file gets the
+// same messages: joined, start, left, full.
+const USE_SERVER = location.port === '8767';
 function netConnect() {
   setNetStatus('Connecting…');
+  if (!USE_SERVER) return peerConnect();
   let ws;
   try { ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.hostname}:8767`); }
   catch (e) { setNetStatus('Could not reach the online server.', true); return; }
@@ -44,6 +51,73 @@ function netConnect() {
     setNetStatus('Can\'t reach the online server. Is it running? (In the Ragdoll folder: node server.js)', true);
   };
 }
+// ---------------------------------------------------------------- straight to each other (no server of ours)
+function peerConnect() {
+  if (typeof Peer !== 'undefined') return peerStart();
+  const sc = document.createElement('script');
+  sc.src = 'js/lib/peerjs.min.js';
+  sc.onload = peerStart;
+  sc.onerror = () => setNetStatus('Could not load the online bits. Check your internet.', true);
+  document.head.appendChild(sc);
+}
+function peerStart() {
+  const id = 'ragdollbrawl-' + ROOM;
+  // (what the rest of this file talks to: like a WebSocket)
+  const link = { readyState: 0, conn: null, peer: null, heard: 0, send(s) { if (this.conn && this.conn.open) try { this.conn.send(s); } catch (e) {} } };
+  NET.ws = link;
+  const lost = () => {
+    if (!link.conn) return;
+    try { link.conn.close(); } catch (e) {}
+    link.conn = null; link.readyState = 0;
+    netMessage({ t: 'left' });
+    // (if they were the host, you take over the room, so they can come back into it)
+    if (!link.host) { try { link.peer.destroy(); } catch (e) {} setTimeout(beHost, 800); }
+    else netMessage({ t: 'joined', n: 1 });
+  };
+  const attach = conn => {
+    link.conn = conn;
+    conn.on('open', () => {
+      link.readyState = 1; link.heard = performance.now();
+      if (link.host) { netMessage({ t: 'joined', n: 2 }); conn.send(JSON.stringify({ t: 'start', host: false })); netMessage({ t: 'start', host: true }); }
+    });
+    conn.on('data', d => { link.heard = performance.now(); let m; try { m = JSON.parse(d); } catch (e) { return; } if (m.t !== 'ping') netMessage(m); });
+    conn.on('close', lost);
+    conn.on('error', () => {});
+  };
+  const trouble = err => setNetStatus('Online trouble (' + (err && err.type || 'unknown') + '). Try again in a moment.', true);
+  // the first one in: the host
+  function beHost() {
+    const peer = link.peer = new Peer(id);
+    link.host = true;
+    peer.on('open', () => netMessage({ t: 'joined', n: 1 }));
+    peer.on('connection', conn => {
+      if (link.conn && link.conn.open) { conn.on('open', () => { conn.send(JSON.stringify({ t: 'full' })); setTimeout(() => conn.close(), 500); }); return; }
+      attach(conn);
+    });
+    peer.on('error', err => {
+      if (err.type === 'unavailable-id') { peer.destroy(); beGuest(); }   // (someone's hosting it already: join them)
+      else trouble(err);
+    });
+  }
+  // the second one: connect to the host
+  function beGuest() {
+    const peer = link.peer = new Peer();
+    link.host = false;
+    peer.on('open', () => attach(peer.connect(id, { reliable: true })));
+    peer.on('error', err => {
+      if (err.type === 'peer-unavailable') { peer.destroy(); setTimeout(beHost, 300); }   // (the host's gone: you're it)
+      else trouble(err);
+    });
+  }
+  beHost();
+  // (every couple of seconds, a hello; heard nothing for a while: they've gone)
+  setInterval(() => {
+    if (!link.conn || !link.conn.open) return;
+    link.send(JSON.stringify({ t: 'ping' }));
+    if (performance.now() - link.heard > 9000) lost();
+  }, 2000);
+}
+
 function netMessage(m) {
   if (m.t === 'joined') {
     NET.ips = m.ips || [];
@@ -97,6 +171,7 @@ function netMessage(m) {
   }
 }
 function shareLink() {
+  if (!USE_SERVER) return `${location.origin}${location.pathname}?room=${ROOM}`;
   const host = NET.ips[0] || location.hostname;
   return `http://${host}:${location.port || 80}/?room=${ROOM}`;
 }
@@ -347,8 +422,7 @@ function buildOnline() {
       <label class="nameRow"><span>YOUR NAME</span><input id="myName" maxlength="12" placeholder="PLAYER" autocomplete="off" spellcheck="false"></label>
       <button id="hostBtn" class="small">HOST A GAME</button>
       <div class="join"><input id="joinCode" maxlength="6" placeholder="CODE" autocomplete="off" spellcheck="false"><button id="joinBtn" class="small">JOIN</button></div>
-      <p class="note small">The online server has to be running on the host's computer: in the Ragdoll folder, <kbd>node server.js</kbd>.
-        Your friend opens the address it prints (on the same Wi-Fi).</p>
+      <p class="note small">${USE_SERVER ? 'Playing through the online server on this computer (<kbd>node server.js</kbd>): your friend opens the address it prints, on the same Wi-Fi.' : 'Works anywhere: your friend just needs this game\'s address and the code.'}</p>
     </div>
     <button id="onlineDone">DONE</button>`;
   // (your name: shown over your head on their screen. Remembered)
