@@ -55,9 +55,12 @@ function removeLoot(L) {
 function pickUpLoot(who, L) {
   if (!loot.includes(L)) return;
   removeLoot(L);
-  if (NET.on && who === P && L.id) netSend({ t: 'took', id: L.id });   // (online: gone from their island too)
+  if (NET.on && who === P) netSend({ t: 'took', id: L.id, kind: L.item.kind, p: L.pos.toArray().map(r3) });   // (online: gone from their island too)
   const slot = L.item.slot, B = bodyOf(who);
-  if (gearOf(who)[slot]) dropGear(who, slot, fwdOf(who.yaw, _lv2).multiplyScalar(-1.5).setY(3));   // (the old one, tossed behind)
+  if (gearOf(who)[slot]) {
+    const old = dropGear(who, slot, fwdOf(who.yaw, _lv2).multiplyScalar(-1.5).setY(3));   // (the old one, tossed behind)
+    if (NET.on && who === P && old) netLoot(old);   // (online: on their island too, so either of you can pick it up)
+  }
   gearOf(who)[slot] = L.item; wearGear(who);
   fxDust(L.pos, 0.4);
   if (who !== P) fxWord(pick(['MINE!', 'OOH!', 'SHINY!']), B.pos[0], '', 0.6);

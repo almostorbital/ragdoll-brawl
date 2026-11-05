@@ -67,6 +67,7 @@ function startCountdown() {
   COUNT.t = 3.8; COUNT.wait = false;
   // (and which round it is, on a slanted banner: online, which match)
   if (NET.on) slashBanner('MATCH ' + (NET.matchN = (NET.matchN || 0) + 1), 'First to ' + NET.WIN + ' ring-outs!', 'round', 2.6);
+  else if (PRACTICE.on) slashBanner('PRACTICE!', "The dummies don't hit back", 'round', 2.6);
   else slashBanner('ROUND ' + (wave + 1), 'Get ready…', 'round', 2.6);
 }
 // (each frame: true while everyone's held still)
@@ -191,7 +192,7 @@ function showMenu(paused) {
   $('overlay').classList.toggle('paused', paused);
   $('play').textContent = paused ? 'RESUME' : 'PLAY';
   $('hud').classList.add('hidden');
-  if (paused) $('pauseScore').textContent = `Ring-outs: ${koCount}  ·  Falls: ${falls}  ·  Wave ${wave + 1}`;
+  if (paused) $('pauseScore').textContent = PRACTICE.on ? `Practice ground  ·  Dummies knocked off: ${koCount}` : `Ring-outs: ${koCount}  ·  Falls: ${falls}  ·  Wave ${wave + 1}`;
   fitTitle();
 }
 function hideMenu() {

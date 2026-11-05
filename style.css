@@ -725,3 +725,6 @@ body.touch #foes { position: fixed; top: 10px; left: 50%; transform: translateX(
 
 /* (on a phone: the name tags smaller) */
 @media (max-height: 520px) { #nametags .nt { font-size: 11px; padding: 1px 7px 2px; border-width: 2px; } }
+/* PRACTICE: sandbag-coloured, like the dummies; and the last button, on its own, goes all the way across */
+#overlay .smalls #practiceBtn { background: linear-gradient(#f0cf98, #d29a55); border-left-color: #d8b07a; }
+#overlay .smalls button.small:last-child:nth-child(odd) { grid-column: span 2; }

@@ -47,6 +47,7 @@ function loadFighter(i) {
 function updateWaves(dt) {
   if (NET.on) return;   // (online 1v1: no other fighters. See net.js)
   if (FIGHTER_POOL.length < MAX_FIGHTERS) return;   // (still loading)
+  if (PRACTICE.on) return updatePractice(dt);   // (the practice ground: dummies instead. See practice.js)
   if (waveToDrop > 0) {
     dropT -= dt;
     if (dropT > 0) return;
@@ -140,7 +141,7 @@ function thinkFighter(F, dt) {
     if (F.pos.y < RINGOUT_Y) {
       // fell off the island: a ring-out! (and every few, they get a bit tougher)
       koCount++;
-      countRingOut();   // (towards unlocking gear: see custom.js)
+      if (!PRACTICE.on) countRingOut();   // (towards unlocking gear: see custom.js. Not dummies, on the practice ground)
       returnGear(F);   // (whatever it had on lands back on the island: see loot.js)
       takeOff(F); return;   // (and that's one fewer in this wave)
     }
@@ -154,8 +155,8 @@ function thinkFighter(F, dt) {
   if (F.offT > 0.5) { F.offT = 0; goLimp(); return; }
 
   // decide what to do (see fighterBrain): sets _fa to how fast and which way it wants to go, and F.face
-  const d = F.ally ? allyBrain(F, dt) : fighterBrain(F, dt);   // (your teammate's got its own: see allies.js)
-  if (!F.ally) fighterSpecial(F, d);   // (its special move: see specials.js)
+  const d = F.ally ? allyBrain(F, dt) : F.dummy ? dummyBrain(F) : fighterBrain(F, dt);   // (your teammate's got its own: see allies.js; a practice dummy too, see practice.js)
+  if (!F.ally && !F.dummy) fighterSpecial(F, d);   // (its special move: see specials.js)
   // a gap in the way, with somewhere to land just across it? jump it
   const spd = Math.hypot(_fa.x, _fa.z);
   if (F.leaping && F.onGround) F.leaping = false;

@@ -145,7 +145,9 @@ function netMessage(m) {
     const L = spawnLoot(newItem(m.slot, m.kind), V3(...m.p), V3(...m.v));
     L.id = m.id;
   } else if (m.t === 'took') {
-    const L = loot.find(L => L.id === m.id);
+    // (by its id; or, gear that never had one, the same kind lying closest to where they picked it up)
+    let L = m.id && loot.find(L => L.id === m.id);
+    if (!L && m.p) { let bd = 2; for (const Q of loot) { const d = Math.hypot(Q.pos.x - m.p[0], Q.pos.z - m.p[2]); if (Q.item.kind === m.kind && d < bd) { bd = d; L = Q; } } }
     if (L) removeLoot(L);
   } else if (m.t === 'fell') {
     koCount++;
