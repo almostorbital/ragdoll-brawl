@@ -39,7 +39,7 @@ new THREE.GLTFLoader().load('models/ragdoll.glb', gltf => {
 function startGame() {
   if (!ready) return;
   if (CUSTOM.open) closeCustom();
-  closeCombos(); closeControls(); closeOnline();
+  closeCombos(); closeControls(); closeOnline(); closeBoard();
   const first = !started;
   playing = started = true; last = performance.now(); acc = 0;
   hideMenu();

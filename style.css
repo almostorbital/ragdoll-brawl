@@ -210,13 +210,13 @@ kbd.m { background: #ffe9c7; }
 #overlay .smalls button.small { margin: 0; }
 
 /* ---------------------------------------------------------------- the COMBOS page (combos.js) */
-#combosPanel, #controlsPanel, #onlinePanel { display: none; }
-#overlay.combos .box, #overlay.controls .box, #overlay.online .box { display: none; }
-#overlay.combos #combosPanel, #overlay.controls #controlsPanel, #overlay.online #onlinePanel { display: block; position: relative; z-index: 1; margin-right: 6vw; width: 380px; background: var(--cream); border: 5px solid var(--ink);
+#combosPanel, #controlsPanel, #onlinePanel, #boardPanel { display: none; }
+#overlay.combos .box, #overlay.controls .box, #overlay.online .box, #overlay.board .box { display: none; }
+#overlay.combos #combosPanel, #overlay.controls #controlsPanel, #overlay.online #onlinePanel, #overlay.board #boardPanel { display: block; position: relative; z-index: 1; margin-right: 6vw; width: 380px; background: var(--cream); border: 5px solid var(--ink);
   border-radius: 26px; padding: 18px 22px 22px; max-height: calc(100vh - 50px); overflow-y: auto; box-sizing: border-box;
   box-shadow: 0 10px 0 var(--ink), 0 20px 50px rgba(0, 0, 0, .35); color: var(--ink); animation: pop .4s cubic-bezier(.2, 1.6, .4, 1); }
-#combosPanel h2, #controlsPanel h2, #onlinePanel h2 { margin: 0 0 6px; font-size: 30px; font-weight: 900; letter-spacing: 2px; text-align: center; transform: rotate(-2deg); }
-#combosPanel .note, #controlsPanel .note, #onlinePanel .note { margin: 4px 0 10px; font-size: 13px; font-weight: 800; line-height: 1.9; }
+#combosPanel h2, #controlsPanel h2, #onlinePanel h2, #boardPanel h2 { margin: 0 0 6px; font-size: 30px; font-weight: 900; letter-spacing: 2px; text-align: center; transform: rotate(-2deg); }
+#combosPanel .note, #controlsPanel .note, #onlinePanel .note, #boardPanel .note { margin: 4px 0 10px; font-size: 13px; font-weight: 800; line-height: 1.9; }
 #combosPanel .list, #controlsPanel .list, #onlinePanel .list { display: grid; gap: 8px; }
 #combosPanel .combo { background: #fff; border: 3px solid var(--ink); border-radius: 14px; padding: 8px 12px; }
 #combosPanel .combo.got { background: #fff6d6; }
@@ -311,14 +311,14 @@ kbd.m { background: #ffe9c7; }
 /* ---------------------------------------------------------------- every menu the same size
    The title box and all the pages (customize, combos, controls, online) are one size, 600 by 700, and zoomed
    the same to fit the window (--mz: see fitTitle in ui.js). Anything too long scrolls inside. */
-#overlay .box, #overlay.custom #custom, #overlay.combos #combosPanel, #overlay.controls #controlsPanel, #overlay.online #onlinePanel {
+#overlay .box, #overlay.custom #custom, #overlay.combos #combosPanel, #overlay.controls #controlsPanel, #overlay.online #onlinePanel, #overlay.board #boardPanel {
   width: 600px; height: 700px; max-height: none; box-sizing: border-box; overflow-y: auto; zoom: var(--mz, 1); margin-right: 6vw;
   border-radius: 28px; padding: 22px 34px 26px; }
 #overlay .box { display: flex; flex-direction: column; justify-content: center; }
 #overlay .box > #play { align-self: center; }
 #overlay .box > .sounds { display: flex; justify-content: center; gap: 10px; }
 #overlay .box > .sounds button.tiny { margin: 12px 0 0; }
-#overlay #custom h2, #combosPanel h2, #controlsPanel h2, #onlinePanel h2 { font-size: 36px; margin-bottom: 10px; }
+#overlay #custom h2, #combosPanel h2, #controlsPanel h2, #onlinePanel h2, #boardPanel h2 { font-size: 36px; margin-bottom: 10px; }
 #custom .swatches { grid-template-columns: repeat(12, 1fr); gap: 6px; }
 
 /* ---------------------------------------------------------------- the power cards (bottom left)
@@ -432,12 +432,12 @@ kbd.m { background: #ffe9c7; }
 /* ---------------------------------------------------------------- the menus' headings: slanted ribbons too
    Each page's title sits on a slanted striped ribbon (a colour each), like the banners in the game; and the
    little headings inside (COLOUR, HAT…) are small slanted tags. */
-#overlay #custom h2, #combosPanel h2, #controlsPanel h2, #onlinePanel h2 {
+#overlay #custom h2, #combosPanel h2, #controlsPanel h2, #onlinePanel h2, #boardPanel h2 {
   position: relative; display: block; width: fit-content; margin: 4px auto 18px; padding: 6px 40px 10px; z-index: 0;
   font-size: 40px; font-style: italic; color: #fff; transform: rotate(-3deg);
   text-shadow: 4px 4px 0 var(--ink), -4px 4px 0 var(--ink), 4px -4px 0 var(--ink), -4px -4px 0 var(--ink), 0 6px 0 var(--ink);
   animation: menuribbon .5s .05s cubic-bezier(.2, 1.5, .4, 1) both; }
-#overlay #custom h2::before, #combosPanel h2::before, #controlsPanel h2::before, #onlinePanel h2::before {
+#overlay #custom h2::before, #combosPanel h2::before, #controlsPanel h2::before, #onlinePanel h2::before, #boardPanel h2::before {
   content: ""; position: absolute; inset: 0; z-index: -1; transform: skewX(-16deg); border: 5px solid var(--ink); border-radius: 10px;
   box-shadow: 0 7px 0 var(--ink);
   background: repeating-linear-gradient(-60deg, rgba(255, 255, 255, .14) 0 12px, transparent 12px 26px), linear-gradient(#2f7bff, #1f5fd8); }
@@ -737,3 +737,21 @@ body.touch #foes { position: fixed; top: 10px; left: 50%; transform: translateX(
 .bestLine { margin: 10px 0 0; font-size: 17px; font-weight: 900; color: var(--orange); min-height: 1.2em; }
 #splash .bestLine { align-self: center; margin: -8px 0 14px; }
 #overlay.paused .bestLine { display: none; }
+
+/* ---------------------------------------------------------------- the LEADERBOARD page (leaderboard.js) */
+#overlay .smalls button.small.wide { grid-column: 1 / -1; }
+#boardPanel h2::before { background: repeating-linear-gradient(-60deg, rgba(255, 255, 255, .14) 0 12px, transparent 12px 26px), linear-gradient(#ffd23a, #f0a810); }
+#boardPanel .nameRow { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 14px; letter-spacing: 1px; margin-bottom: 12px; }
+#boardPanel .nameRow input { flex: 1; min-width: 0; font: 900 20px var(--font); letter-spacing: 2px; text-transform: uppercase; padding: 6px 10px;
+  border: 3px solid var(--ink); border-radius: 10px; background: #fff; color: var(--ink); }
+#boardPanel table { width: 100%; border-collapse: separate; border-spacing: 0 4px; font-weight: 900; font-size: 16px; }
+#boardPanel th { font-size: 11px; letter-spacing: 1px; color: #6a6458; text-align: left; padding: 0 8px; }
+#boardPanel td { background: #fff; border-top: 3px solid var(--ink); border-bottom: 3px solid var(--ink); padding: 5px 8px; }
+#boardPanel td:first-child { border-left: 3px solid var(--ink); border-radius: 10px 0 0 10px; width: 2em; color: var(--orange); }
+#boardPanel td:last-child { border-right: 3px solid var(--ink); border-radius: 0 10px 10px 0; }
+#boardPanel tr.me td { background: #fff6d6; }
+#boardPanel tr:nth-child(2) td:first-child { color: #e0a800; }
+#boardPanel .note.small { font-size: 12px; line-height: 1.6; color: #6a6458; min-height: 1.6em; margin: 8px 0 0; }
+#boardPanel .row { display: flex; gap: 12px; justify-content: center; align-items: center; margin-top: 10px; }
+#boardPanel .row button { margin: 0; }
+#boardPanel #boardPost:disabled { opacity: .5; cursor: default; }

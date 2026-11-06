@@ -211,7 +211,7 @@ $('newBtn').onclick = () => {
     clearTimeout(b.t); b.t = setTimeout(() => { b.classList.remove('sure'); b.textContent = 'NEW GAME'; $('splashNote').textContent = 'START carries on where you left off. NEW GAME starts again from nothing.'; }, 3500);
     return;
   }
-  for (const k of ['ragdollLook', 'ragdollRingouts', 'ragdollCombos', 'ragdollBestWave']) localStorage.removeItem(k);
+  for (const k of ['ragdollLook', 'ragdollRingouts', 'ragdollCombos', 'ragdollBestWave', 'ragdollBestRingouts']) localStorage.removeItem(k);
   sessionStorage.setItem('ragdollSkipSplash', '1');
   location.reload();
 };
