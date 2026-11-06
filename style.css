@@ -739,7 +739,6 @@ body.touch #foes { position: fixed; top: 10px; left: 50%; transform: translateX(
 #overlay.paused .bestLine { display: none; }
 
 /* ---------------------------------------------------------------- the LEADERBOARD page (leaderboard.js) */
-#overlay .smalls button.small.wide { grid-column: 1 / -1; }
 #boardPanel h2::before { background: repeating-linear-gradient(-60deg, rgba(255, 255, 255, .14) 0 12px, transparent 12px 26px), linear-gradient(#ffd23a, #f0a810); }
 #boardPanel .nameRow { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 14px; letter-spacing: 1px; margin-bottom: 12px; }
 #boardPanel .nameRow input { flex: 1; min-width: 0; font: 900 20px var(--font); letter-spacing: 2px; text-transform: uppercase; padding: 6px 10px;

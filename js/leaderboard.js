@@ -45,8 +45,10 @@ function boardNewBest(wave, ringouts) {
 // ---------------------------------------------------------------- the LEADERBOARD page
 function buildBoard() {
   if (!boardOn()) return;
-  const btn = $('boardBtn');
-  btn.style.display = '';
+  // (its button, only when it's switched on: an empty one in the menu's grid would leave a gap)
+  const btn = document.createElement('button');
+  btn.id = 'boardBtn'; btn.className = 'small'; btn.textContent = 'LEADERBOARD';
+  $('onlineBtn').before(btn);
   btn.onclick = openBoard;
   $('boardPanel').innerHTML = `<h2>LEADERBOARD</h2>
     <p class="note">The best waves anyone's reached. Run out of lives on a new best and it goes up here.</p>
