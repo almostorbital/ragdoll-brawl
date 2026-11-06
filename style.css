@@ -758,3 +758,13 @@ body.touch #foes { position: fixed; top: 10px; left: 50%; transform: translateX(
 #boardPanel .tabs button { margin: 0; }
 #boardPanel .tabs button.on { background: var(--orange); color: #fff; }
 #boardPanel .empty { text-align: center; font-weight: 900; font-size: 16px; margin: 24px 0; color: #6a6458; }
+
+/* ---------------------------------------------------------------- your level (custom.js): under the score, and on the customize page */
+#score .xp { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; font-weight: 900; }
+#score .xp b { color: var(--blue); white-space: nowrap; }
+#score .xp .bar { flex: 1; min-width: 70px; height: 8px; background: #e6dccb; border: 2px solid var(--ink); border-radius: 6px; overflow: hidden; }
+#score .xp .bar i { display: block; height: 100%; width: 0; background: linear-gradient(#5ad1ff, #2f7bff); transition: width .4s; }
+#score .xp.bump { animation: bump .5s; }
+#custom .unlockNote .xpTo { font-size: 12px; color: #6a6458; margin-left: 6px; }
+#custom .unlockNote u { text-decoration: none; color: var(--orange); text-transform: uppercase; }
+#matchEnd .sub.small { font-size: 18px; margin-top: 8px; }

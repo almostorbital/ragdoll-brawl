@@ -67,7 +67,8 @@ function showGameOver(reached, isBest) {
   el.className = isBest ? 'win' : 'lose';
   el.innerHTML = `${isBest ? '<div class="stars">' + Array.from({ length: 40 }, () => `<i style="left:${Math.random() * 100}%;animation-duration:${1.5 + Math.random() * 2}s;animation-delay:${Math.random() * 1.2}s;background:${['#ffd23a', '#ff9a2a', '#7fe05a', '#5ab8ff', '#ff5fb0'][Math.floor(Math.random() * 5)]}"></i>`).join('') + '</div>' : ''}
     <div class="score">WAVE ${reached}</div>
-    <div class="sub">${isBest ? 'NEW BEST!' : 'Your best: wave ' + LIFE.best}  ·  ${koCount} ring-out${koCount === 1 ? '' : 's'}. A new run in a moment…</div>`;
+    <div class="sub">${isBest ? 'NEW BEST!' : 'Your best: wave ' + LIFE.best}  ·  ${koCount} ring-out${koCount === 1 ? '' : 's'}  ·  +${RUN_XP.n} XP</div>
+    <div class="sub small">Level ${myLevel()}${nextUnlock() ? '  ·  ' + nextUnlock().kind.toUpperCase() + ' at level ' + nextUnlock().level : ''}. A new run in a moment…</div>`;
   el.style.display = 'flex';
   slashBanner('GAME OVER', isBest ? 'A NEW BEST: WAVE ' + reached + '!' : 'Out of lives on wave ' + reached, isBest ? 'win' : 'lose', 3.4);
   showBest();
@@ -75,7 +76,7 @@ function showGameOver(reached, isBest) {
 }
 // your best wave, on the title screen and the menu
 function showBest() {
-  const t = LIFE.best ? 'Your best: wave ' + LIFE.best : '';
+  const t = 'Level ' + myLevel() + (LIFE.best ? '  ·  Your best: wave ' + LIFE.best : '');
   $('splashBest').textContent = t;
   $('bestLine').textContent = NET.on ? '' : t;
 }
@@ -157,6 +158,15 @@ function updateUI(dt) {
   if (falls !== UI.lastFalls) { banner('YOU FELL!', 'bad'); UI.lastFalls = falls; }
   if (wave !== UI.lastWave) { slashBanner('ROUND ' + (wave + 1), champWave(wave) ? 'A CHAMPION is coming!' : 'FIGHT!', 'round', 2); UI.lastWave = wave; }
   $('kos').textContent = koCount;
+  // your level, and how far to the next (see custom.js)
+  if (SAVE.xp !== UI.lastXP) {
+    const L = myLevel(), into = SAVE.xp - xpTo(L);
+    $('lvl').textContent = 'LV ' + L;
+    $('xpFill').style.width = (into / xpStep(L) * 100).toFixed(1) + '%';
+    $('xpRow').title = into + ' / ' + xpStep(L) + ' XP to level ' + (L + 1);
+    if (UI.lastXP != null && L > levelOf(UI.lastXP)) bump($('xpRow'));
+    UI.lastXP = SAVE.xp;
+  }
   $('falls').textContent = falls;
   // (single player: your lives, a heart each. Online, and on the practice ground, it's falls instead)
   const noLives = NET.on || PRACTICE.on;
@@ -207,11 +217,11 @@ $('newBtn').onclick = () => {
   const b = $('newBtn');
   if (!b.classList.contains('sure')) {
     b.classList.add('sure'); b.textContent = 'SURE? CLICK AGAIN';
-    $('splashNote').textContent = 'This wipes your unlocked gear, your combos, your look, your best wave and the leaderboard!';
+    $('splashNote').textContent = 'This wipes your level, your unlocked gear, your combos, your look, your best wave and the leaderboard!';
     clearTimeout(b.t); b.t = setTimeout(() => { b.classList.remove('sure'); b.textContent = 'NEW GAME'; $('splashNote').textContent = 'START carries on where you left off. NEW GAME starts again from nothing.'; }, 3500);
     return;
   }
-  for (const k of ['ragdollLook', 'ragdollRingouts', 'ragdollCombos', 'ragdollBestWave', 'ragdollBestRingouts', 'ragdollRuns']) localStorage.removeItem(k);
+  for (const k of ['ragdollLook', 'ragdollRingouts', 'ragdollCombos', 'ragdollBestWave', 'ragdollBestRingouts', 'ragdollRuns', 'ragdollXP', 'ragdollKept']) localStorage.removeItem(k);
   sessionStorage.setItem('ragdollSkipSplash', '1');
   location.reload();
 };

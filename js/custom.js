@@ -4,7 +4,8 @@
 // (or pause) screen; you see yourself up close while you choose. What you pick is remembered for next time.
 'use strict';
 const LOOK_COLORS = [0x2f7bff, 0x22c3e6, 0x2fcf6a, 0x9ad63a, 0xffd23a, 0xff9a2a, 0xff4a4a, 0xff5fb0, 0xa45cff, 0x8a5a3c, 0xf4f0e6, 0x3a3a4a, 0x5ee0c0];
-const HATS = ['none', 'cap', 'top hat', 'party hat', 'beanie', 'viking'];
+// (the first few are yours from the start; the rest unlock as you level up: see UNLOCK)
+const HATS = ['none', 'cap', 'top hat', 'party hat', 'beanie', 'viking', 'chef hat', 'cowboy hat', 'propeller cap', 'traffic cone', 'wizard hat', 'pirate hat', 'bunny ears', 'halo', 'crown'];
 const BROWS = { thin: 0.6, normal: 1, thick: 1.8 };
 // the gear: what each does (its stats multiply: punch, kick: how hard those hit; heft: how far your punches
 // send them; speed, jump; grip: how quickly you can change speed on the ground; coast: and how quickly you stop;
@@ -14,11 +15,15 @@ const GEAR = {
     none: { desc: 'Bare hands.' },
     'boxing gloves': { desc: 'Punches hit 40% harder.', stats: { punch: 1.4 } },
     'cartoon hammer': { desc: 'BONK! Every punch is a big hammer smash: much harder and further, but a bit slower.', stats: { punch: 1.8, heft: 1.4 } },
+    'iron fists': { desc: 'Heavy metal fists: punches hit harder and send them further, but they slow you down a bit.', stats: { punch: 1.3, heft: 1.25, speed: 0.9 } },
+    'foam fingers': { desc: 'A giant foam #1 hand! Your hits barely hurt, but they send people FLYING.', stats: { punch: 0.75, heft: 1.8 } },
   },
   feet: {
     none: { desc: 'Bare feet.' },
     'butter shoes': { desc: 'Slide about super fast, but they are really hard to stop!', stats: { speed: 1.5, grip: 0.12, coast: 0.25 } },
     'spring shoes': { desc: 'Jump 35% higher.', stats: { jump: 1.35 } },
+    'rocket boots': { desc: 'Zoom! Run faster and jump higher, but they are a bit slippy.', stats: { speed: 1.3, jump: 1.2, grip: 0.6 } },
+    'clown shoes': { desc: 'Huge floppy shoes. Your kicks hit really hard, but you are a bit slower.', stats: { kick: 1.7, heft: 1.15, speed: 0.9 } },
   },
 };
 // ---------------------------------------------------------------- special moves: one for each colour
@@ -75,19 +80,54 @@ const bodyOf = who => who === P ? playerBody : who.B;
 // how far up someone's springs hold them (if they've got spring shoes on)
 const springLift = (who = P) => wearing(who, 'spring shoes') ? GEAR_MODELS['spring shoes'].lift || 0 : 0;
 
-// Gear has to be unlocked: ring out fighters to earn it. Ring-outs are counted up over every game you play
-// (and remembered), and each piece unlocks once you've rung out this many altogether.
-const UNLOCK = { 'boxing gloves': 3, 'spring shoes': 8, 'butter shoes': 15, 'cartoon hammer': 25 };
-const SAVE = { ringouts: +localStorage.getItem('ragdollRingouts') || 0 };
-const unlocked = kind => !UNLOCK[kind] || SAVE.ringouts >= UNLOCK[kind];
-// (a ring-out: count it, and if that's unlocked something, say so)
+// LEVELS: everything you do in a fight earns XP (ring-outs, clearing waves, beating champions), and XP
+// levels you up. Hats and gear unlock as you level (UNLOCK: which level each needs; the first few hats are
+// yours from the start). XP and your level are remembered.
+const UNLOCK = {
+  'boxing gloves': 2, 'chef hat': 3, 'spring shoes': 4, 'cowboy hat': 5, 'butter shoes': 6, 'propeller cap': 7,
+  'cartoon hammer': 8, 'traffic cone': 9, 'iron fists': 10, 'wizard hat': 11, 'rocket boots': 12, 'pirate hat': 13,
+  'bunny ears': 14, 'foam fingers': 15, 'halo': 16, 'clown shoes': 18, 'crown': 20,
+};
+const XP_FOR = { ringout: 10, champ: 40, wave: 5 };   // (a ring-out; a champion's, instead; clearing wave n: n times this)
+// (how much XP it takes to get from level L to the next one; and how much altogether to reach level L)
+const xpStep = L => 40 + 20 * L;
+const xpTo = L => 40 * (L - 1) + 10 * (L - 1) * L;
+const levelOf = xp => { let L = 1; while (xp >= xpTo(L + 1)) L++; return L; };
+const SAVE = { ringouts: +localStorage.getItem('ragdollRingouts') || 0, xp: +localStorage.getItem('ragdollXP') || 0, kept: [] };
+try { SAVE.kept = JSON.parse(localStorage.getItem('ragdollKept') || '[]'); } catch (e) {}
+// (from before there were levels, when gear unlocked by ring-outs: a start on XP for the ones you'd done, and
+// whatever you'd unlocked then stays unlocked)
+if (localStorage.getItem('ragdollXP') === null && SAVE.ringouts > 0) {
+  const OLD = { 'boxing gloves': 3, 'spring shoes': 8, 'butter shoes': 15, 'cartoon hammer': 25 };
+  SAVE.xp = SAVE.ringouts * XP_FOR.ringout;
+  SAVE.kept = Object.keys(OLD).filter(k => SAVE.ringouts >= OLD[k]);
+  localStorage.setItem('ragdollXP', SAVE.xp); localStorage.setItem('ragdollKept', JSON.stringify(SAVE.kept));
+}
+const myLevel = () => levelOf(SAVE.xp);
+const unlocked = kind => !UNLOCK[kind] || myLevel() >= UNLOCK[kind] || SAVE.kept.includes(kind);
+// (the next thing you'll unlock, and at what level: null when you've got the lot)
+const nextUnlock = () => { const k = Object.keys(UNLOCK).filter(k => !unlocked(k)).sort((a, b) => UNLOCK[a] - UNLOCK[b])[0]; return k ? { kind: k, level: UNLOCK[k] } : null; };
 const cap = s => s[0].toUpperCase() + s.slice(1);
-function countRingOut() {
-  const before = Object.keys(UNLOCK).filter(unlocked);
+// earn some XP: and if that's a new level, say so, and what it's unlocked
+function addXP(n) {
+  if (!(n > 0)) return;
+  const before = myLevel();
+  SAVE.xp += Math.round(n);
+  RUN_XP.n += Math.round(n);
+  localStorage.setItem('ragdollXP', SAVE.xp);
+  const now = myLevel();
+  for (let L = before + 1; L <= now; L++) {
+    setTimeout(() => banner('LEVEL ' + L + '!', 'unlock'), 600);
+    for (const kind in UNLOCK) if (UNLOCK[kind] === L && !SAVE.kept.includes(kind)) setTimeout(() => banner('UNLOCKED: ' + kind.toUpperCase() + '!', 'unlock'), 900);
+  }
+  if (now > before) { showLocks(); if (typeof showBest === 'function') showBest(); }
+}
+const RUN_XP = { n: 0 };   // (earned this run: shown at GAME OVER)
+// (a ring-out: count it, and its XP. F: who, if it was a fighter: a champion's worth more)
+function countRingOut(F) {
   SAVE.ringouts++;
   localStorage.setItem('ragdollRingouts', SAVE.ringouts);
-  for (const kind in UNLOCK) if (unlocked(kind) && !before.includes(kind)) setTimeout(() => banner('UNLOCKED: ' + kind.toUpperCase() + '!', 'unlock'), 1000);
-  showLocks();
+  addXP(F && F.B && F.B.champ ? XP_FOR.champ : XP_FOR.ringout);
 }
 // SIZE: small ones are really fast but light (easy to knock away) and hit softer; big ones are really slow
 // but heavy (hard to knock away) and hit harder; normal's in between. (Its stats multiply like a special's do.)
@@ -146,6 +186,63 @@ function makeHat(kind, R, mudU) {
       const horn = add(new THREE.ConeGeometry(R * 0.32, R * 1.5, 16), 0xf4f0e6, s * R * 1.3, R * 0.2, 0);
       horn.rotation.z = -s * 0.85;
     }
+  } else if (kind === 'chef hat') {
+    // a tall white band with a big puffy top
+    add(new THREE.CylinderGeometry(R * 0.82, R * 0.86, R * 0.75, 24), 0xffffff, 0, -R * 0.05);
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; add(new THREE.SphereGeometry(R * 0.42, 14, 10), 0xffffff, Math.sin(a) * R * 0.5, R * 0.5, Math.cos(a) * R * 0.5, 0.01); }
+    add(new THREE.SphereGeometry(R * 0.55, 16, 12), 0xffffff, 0, R * 0.65, 0, 0.01);
+  } else if (kind === 'cowboy hat') {
+    const brim = add(new THREE.CylinderGeometry(R * 1.55, R * 1.55, R * 0.08, 32), 0xa0662e, 0, -R * 0.3);
+    brim.scale.z = 1.15;
+    add(new THREE.CylinderGeometry(R * 0.72, R * 0.82, R * 0.75, 24), 0xa0662e, 0, R * 0.08);
+    add(new THREE.CylinderGeometry(R * 0.84, R * 0.84, R * 0.16, 24), 0x4a2a18, 0, -R * 0.18);
+    const dent = add(new THREE.SphereGeometry(R * 0.72, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0xa0662e, 0, R * 0.42);
+    dent.scale.y = 0.35;
+  } else if (kind === 'propeller cap') {
+    // a two-colour cap with a little propeller on top (it spins: see spinHats)
+    dome(R * 1.08, 0x3ad1ff, -R * 0.62);
+    const half = add(new THREE.SphereGeometry(R * 1.085, 24, 12, 0, Math.PI, 0, Math.PI / 2), 0xffd23a, 0, -R * 0.62);
+    half.rotation.y = Math.PI / 2;
+    const brim = add(new THREE.CylinderGeometry(R * 0.7, R * 0.7, R * 0.07, 24, 1, false, Math.PI / 2, Math.PI), 0xff4a4a, 0, -R * 0.6, -R * 0.62);
+    brim.scale.z = 1.2;
+    add(new THREE.CylinderGeometry(R * 0.05, R * 0.05, R * 0.4, 8), 0x3a3a4a, 0, R * 0.55, 0, 0.006);
+    const prop = new THREE.Group(); prop.position.y = R * 0.78; g.add(prop); g.userData.prop = prop;
+    for (const s of [-1, 1]) {
+      const blade = outline(new THREE.Mesh(roundedBox(R * 0.9, R * 0.05, R * 0.24, R * 0.02), withMud(mat(s > 0 ? 0xff4a4a : 0xff9a2a), mudU)), 0.008);
+      blade.position.x = s * R * 0.45; blade.rotation.x = s * 0.25; blade.castShadow = true; prop.add(blade);
+    }
+    add(new THREE.SphereGeometry(R * 0.09, 10, 8), 0xffd23a, 0, R * 0.8, 0, 0.006);
+  } else if (kind === 'traffic cone') {
+    add(roundedBox(R * 1.6, R * 0.14, R * 1.6, R * 0.04), 0xff7a1a, 0, -R * 0.25);
+    add(new THREE.ConeGeometry(R * 0.72, R * 1.9, 24), 0xff7a1a, 0, R * 0.75);
+    add(new THREE.CylinderGeometry(R * 0.47, R * 0.56, R * 0.3, 24), 0xffffff, 0, R * 0.42, 0, 0.004);
+    add(new THREE.CylinderGeometry(R * 0.24, R * 0.32, R * 0.24, 24), 0xffffff, 0, R * 1.05, 0, 0.004);
+  } else if (kind === 'wizard hat') {
+    add(new THREE.CylinderGeometry(R * 1.35, R * 1.35, R * 0.07, 28), 0x5a2fb0, 0, -R * 0.2);
+    const tip = add(new THREE.ConeGeometry(R * 0.82, R * 2.1, 24), 0x6a3ad0, 0, R * 0.85);
+    tip.rotation.z = 0.18; tip.position.x = -R * 0.12;
+    const stars = [[0.45, 0.3, -0.55], [-0.35, 0.9, -0.45], [0.1, 1.3, -0.35], [-0.6, 0.15, -0.3]];
+    for (const [x, y, z] of stars) add(new THREE.OctahedronGeometry(R * 0.11), 0xffd23a, x * R, y * R, z * R, 0.004);
+  } else if (kind === 'pirate hat') {
+    dome(R * 1.08, 0x2a2838, -R * 0.6);
+    // the big upturned brim at the front, with a skull on it
+    const front = add(roundedBox(R * 2.3, R * 0.85, R * 0.12, R * 0.05), 0x2a2838, 0, R * 0.05, -R * 0.55);
+    front.rotation.x = -0.25;
+    add(roundedBox(R * 2.32, R * 0.08, R * 0.13, R * 0.03), 0xffd23a, 0, R * 0.43, -R * 0.64, 0.004).rotation.x = -0.25;
+    add(new THREE.SphereGeometry(R * 0.17, 12, 10), 0xffffff, 0, R * 0.08, -R * 0.66, 0.006);
+    for (const s of [-1, 1]) add(roundedBox(R * 0.36, R * 0.07, R * 0.07, R * 0.02), 0xffffff, 0, -R * 0.18, -R * 0.63, 0.004).rotation.z = s * 0.7;
+  } else if (kind === 'bunny ears') {
+    add(new THREE.TorusGeometry(R * 0.95, R * 0.06, 8, 32, Math.PI), 0xff5fb0, 0, -R * 0.55, 0, 0.006);
+    for (const s of [-1, 1]) {
+      const ear = add(new THREE.SphereGeometry(R * 0.26, 16, 12), 0xffffff, s * R * 0.42, R * 0.55, R * 0.02);
+      ear.scale.set(1, 3, 0.55); ear.rotation.z = -s * 0.22;
+      const inner = add(new THREE.SphereGeometry(R * 0.15, 14, 10), 0xffa8d6, s * R * 0.42, R * 0.55, -R * 0.1, 0.004);
+      inner.scale.set(1, 3.6, 0.4); inner.rotation.z = -s * 0.22;
+    }
+  } else if (kind === 'halo') {
+    const ring = add(new THREE.TorusGeometry(R * 0.7, R * 0.11, 12, 36), 0xffe14a, 0, R * 0.55);
+    ring.rotation.x = Math.PI / 2 + 0.15;
+    ring.material.emissive = col(0xffc928); ring.material.emissiveIntensity = 0.45;
   }
   return g;
 }
@@ -168,7 +265,41 @@ const GEAR_MODELS = {
   'cartoon hammer': { file: 'hammer',
     // (the handle runs up y, with the head across the top; held a little way up from the handle's end)
     fit: b => { const grip = GEAR_MODELS['cartoon hammer'].grip = b.min.y + 0.12; return { k: 0.62 * S / (0.53 - grip), at: V3(0, grip, 0.394) }; } },
+  // (these are made of simple shapes, not loaded: see gearParts. Hands: the fist's middle at 0,0,0, pointing
+  // +x. Feet: the sole's middle at 0,0,0, the toes at -z)
+  'iron fists': { build: () => gearParts([
+    [new THREE.SphereGeometry(0.12 * S, 18, 14), 0x9aa0b4, [0, 0, 0], null, [1.1, 1, 1]],
+    [new THREE.CylinderGeometry(0.085 * S, 0.095 * S, 0.08 * S, 16), 0x5a5e6e, [-0.1 * S, 0, 0], [0, 0, Math.PI / 2]],
+    ...[-1, -0.33, 0.33, 1].map(t => [new THREE.SphereGeometry(0.03 * S, 8, 6), 0x5a5e6e, [0.115 * S, 0.035 * S, t * 0.07 * S]]),
+  ]) },
+  'foam fingers': { build: () => gearParts([
+    [roundedBox(0.2 * S, 0.24 * S, 0.24 * S, 0.06 * S), 0xff9a2a, [0, 0, 0]],
+    [roundedBox(0.26 * S, 0.08 * S, 0.08 * S, 0.035 * S), 0xff9a2a, [0.2 * S, 0.06 * S, 0]],
+    [roundedBox(0.08 * S, 0.07 * S, 0.1 * S, 0.03 * S), 0xff9a2a, [0.05 * S, -0.1 * S, 0.12 * S]],
+    [new THREE.CylinderGeometry(0.1 * S, 0.1 * S, 0.06 * S, 16), 0x2f7bff, [-0.12 * S, 0, 0], [0, 0, Math.PI / 2]],
+  ]) },
+  'rocket boots': { build: () => gearParts([
+    [roundedBox(0.17 * S, 0.12 * S, 0.3 * S, 0.04 * S), 0xe8322a, [0, 0.06 * S, -0.03 * S]],
+    [roundedBox(0.175 * S, 0.03 * S, 0.305 * S, 0.012 * S), 0xffffff, [0, 0.015 * S, -0.03 * S]],
+    [new THREE.CylinderGeometry(0.045 * S, 0.06 * S, 0.1 * S, 14), 0x5a5e6e, [0, 0.08 * S, 0.15 * S], [Math.PI / 2, 0, 0]],
+    [new THREE.ConeGeometry(0.045 * S, 0.14 * S, 12), 0xffb21a, [0, 0.08 * S, 0.26 * S], [-Math.PI / 2, 0, 0]],
+    [new THREE.ConeGeometry(0.025 * S, 0.08 * S, 10), 0xfff4a0, [0, 0.08 * S, 0.24 * S], [-Math.PI / 2, 0, 0]],
+  ]) },
+  'clown shoes': { build: () => gearParts([
+    [new THREE.SphereGeometry(0.1 * S, 18, 12), 0xe8322a, [0, 0.07 * S, -0.11 * S], null, [1.05, 0.75, 2.3]],
+    [roundedBox(0.2 * S, 0.03 * S, 0.5 * S, 0.014 * S), 0xffd23a, [0, 0.015 * S, -0.1 * S]],
+    [new THREE.SphereGeometry(0.035 * S, 10, 8), 0xffffff, [0, 0.14 * S, -0.06 * S]],
+  ]) },
 };
+// a gear model from simple shapes: [geometry, colour, position, rotation, scale] each, baked into its geometry
+function gearParts(list) {
+  return list.map(([g, color, at, rot, sc]) => {
+    const o = new THREE.Object3D();
+    o.position.set(...at); if (rot) o.rotation.set(...rot); if (sc) o.scale.set(...sc);
+    o.updateMatrix(); g.applyMatrix4(o.matrix);
+    return { g, color: col(color) };
+  });
+}
 for (const kind in GEAR_MODELS) {
   const G = GEAR_MODELS[kind];
   if (G.build) { G.parts = G.build(); G.k = 1; continue; }
@@ -316,6 +447,7 @@ const _gy = V3(), _gx = V3(), _gzz = V3(), _gf = V3(), _gm = new THREE.Matrix4()
 function updateGear() {
   for (const who of wearers()) {
     const rig = rigOfWho(who), g = rig && rig.hammer;
+    if (rig && rig.hat && rig.hat.userData.prop) rig.hat.userData.prop.rotation.y += 0.3;   // (a propeller cap: whirr)
     if (!g) continue;
     const B = bodyOf(who), hand = B.pos[6];
     _gy.subVectors(B.pos[6], B.pos[4]).normalize();   // (the arm)
@@ -383,7 +515,11 @@ function applyLook(changed) {
 // the box under each choice saying what it is: a speech bubble, its name big, a tag, and a line about it
 // (kind: 'locked' for a padlocked one: red)
 const HAT_LINES = { none: 'Just you and your big round head.', cap: 'A classic. Sporty!', 'top hat': 'Very fancy. Very tall.',
-  'party hat': 'Every fight is a party.', beanie: 'Warm, woolly, and ready to rumble.', viking: 'Big horns! Fearsome.' };
+  'party hat': 'Every fight is a party.', beanie: 'Warm, woolly, and ready to rumble.', viking: 'Big horns! Fearsome.',
+  'chef hat': 'Cooking up a knuckle sandwich.', 'cowboy hat': "This island ain't big enough for the both of us.",
+  'propeller cap': 'It spins! (It does not help you fly.)', 'traffic cone': 'Caution: falling ragdolls.',
+  'wizard hat': 'You shall not pass. (Off the edge, that is.)', 'pirate hat': 'Arr! Make them walk the plank.',
+  'bunny ears': 'Hop, skip, and punch.', halo: 'An angel. Who knocks people off islands.', crown: 'Level 20. The king of the sky island!' };
 function infoCard(id, title, text, tag, kind, bars) {
   const el = $(id);
   if (!el) return;
@@ -424,11 +560,11 @@ function buildCustom() {
       <p class="desc" id="desc-color"></p>
       <h3>Size</h3><div class="sizes">${Object.keys(SIZES).map(k => `<button class="ccard size" data-k="size" data-v="${k}" style="--fc:#${LOOK.color.toString(16).padStart(6, '0')};--z:${SIZES[k].scale}">${faceHTML(LOOK.color)}<em>${SIZES[k].name}</em></button>`).join('')}</div>
       <p class="desc" id="desc-size"></p>
-      <h3>Hat</h3>${opts('hat', HATS)}<p class="desc" id="desc-hat"></p>
+      <p class="unlockNote" id="unlockNoteHat"></p><h3>Hat</h3>${opts('hat', HATS)}<p class="desc" id="desc-hat"></p>
       <h3>Eyebrows</h3>${opts('brows', Object.keys(BROWS))}
     </div>
     <div class="tab" id="tab-gear" style="display:none">
-      <p class="unlockNote">Ring out fighters to unlock gear! Ring-outs so far: <b id="ringoutsAll">0</b></p>
+      <p class="unlockNote" id="unlockNote"></p>
       ${Object.keys(GEAR).map(slot => `<h3>${slot}</h3>${opts(slot, Object.keys(GEAR[slot]))}<p class="desc" id="desc-${slot}"></p>`).join('')}
     </div>
     <button id="customDone">DONE</button>`;
@@ -439,8 +575,8 @@ function buildCustom() {
   el.querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
     if (!unlocked(b.dataset.v)) {
       // (locked: say how to get it)
-      const left = UNLOCK[b.dataset.v] - SAVE.ringouts;
-      infoCard('desc-' + b.dataset.k, 'LOCKED!', `Ring out ${left} more fighter${left === 1 ? '' : 's'} to unlock the ${b.dataset.v}.`, b.dataset.v, 'locked');
+      const L = UNLOCK[b.dataset.v], left = xpTo(L) - SAVE.xp;
+      infoCard('desc-' + b.dataset.k, 'LOCKED!', `Reach level ${L} to unlock the ${b.dataset.v}. That's ${left} more XP: ring fighters out and clear waves!`, b.dataset.v, 'locked');
       bump(b, 'shake');
       return;
     }
@@ -461,9 +597,12 @@ function showLocks() {
     b.classList.toggle('pic', k === 'none' || !!ICONS[k]);
     b.title = k;
     const face = k === 'none' ? '<span class="nothing">NONE</span>' : ICONS[k] ? `<img src="${ICONS[k]}" alt="${k}">` : k;
-    b.innerHTML = face + (lock ? `<i class="lock">LOCKED<br>${SAVE.ringouts}/${UNLOCK[k]}</i>` : '');
+    b.innerHTML = face + (lock ? `<i class="lock">LEVEL ${UNLOCK[k]}</i>` : '');
   });
-  const n = $('ringoutsAll'); if (n) n.textContent = SAVE.ringouts;
+  // (your level, and what's next)
+  const L = myLevel(), nx = nextUnlock(), into = SAVE.xp - xpTo(L);
+  const note = `Level up to unlock hats and gear! You're <b>LEVEL ${L}</b> <span class="xpTo">${into} / ${xpStep(L)} XP</span>${nx ? `<br>Next: the <u>${nx.kind}</u> at level ${nx.level}.` : '<br>You have unlocked everything!'}`;
+  for (const id of ['unlockNote', 'unlockNoteHat']) { const n = $(id); if (n) n.innerHTML = note; }
 }
 function openCustom() { CUSTOM.open = true; CUSTOM.t = 0; $('overlay').classList.add('custom'); }
 function closeCustom() {

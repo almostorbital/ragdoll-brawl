@@ -64,6 +64,7 @@ function updateWaves(dt) {
     // (beat a champion's wave: a life back, up to MAX_LIVES)
     const bonus = champWave(wave) && LIFE.lives < MAX_LIVES;
     if (bonus) LIFE.lives++;
+    addXP(XP_FOR.wave * (wave + 1));   // (XP for clearing it: more for the later ones. See custom.js)
     slashBanner('ROUND CLEAR!', bonus ? 'You beat the champion: +1 LIFE!' : 'You knocked them all off!', 'win', 2.4);
     return;
   }
@@ -98,7 +99,7 @@ function gameOver() {
 }
 // a fresh run: everyone off, back to wave 1 with full lives, 3, 2, 1...
 function newRun() {
-  LIFE.over = 0;
+  LIFE.over = 0; RUN_XP.n = 0;
   for (const F of fighters.slice()) takeOff(F);
   if (allies.length) endAlly(true);
   wave = 0; waveToDrop = waveSize(0); dropT = 1; waveBreak = 0;
@@ -106,7 +107,7 @@ function newRun() {
   LIFE.lives = START_LIVES; LIFE.falls = 0;
   respawn(); startCountdown();
 }
-const ARMED = { hands: ['boxing gloves', 'cartoon hammer'], feet: ['butter shoes', 'spring shoes'] };
+const ARMED = { hands: ['boxing gloves', 'cartoon hammer', 'iron fists', 'foam fingers'], feet: ['butter shoes', 'spring shoes', 'rocket boots', 'clown shoes'] };
 // a fighter joins the fight (champ: it's the champion)
 function bringOn(F, champ) {
   fighters.push(F); scene.add(F.rig.root);
@@ -186,7 +187,7 @@ function thinkFighter(F, dt) {
     if (F.pos.y < RINGOUT_Y) {
       // fell off the island: a ring-out! (and every few, they get a bit tougher)
       koCount++;
-      if (!PRACTICE.on) countRingOut();   // (towards unlocking gear: see custom.js. Not dummies, on the practice ground)
+      if (!PRACTICE.on) countRingOut(F);   // (towards unlocking gear: see custom.js. Not dummies, on the practice ground)
       returnGear(F);   // (whatever it had on lands back on the island: see loot.js)
       takeOff(F); return;   // (and that's one fewer in this wave)
     }
