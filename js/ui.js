@@ -207,11 +207,11 @@ $('newBtn').onclick = () => {
   const b = $('newBtn');
   if (!b.classList.contains('sure')) {
     b.classList.add('sure'); b.textContent = 'SURE? CLICK AGAIN';
-    $('splashNote').textContent = 'This wipes your unlocked gear, your combos, your look and your best wave!';
+    $('splashNote').textContent = 'This wipes your unlocked gear, your combos, your look, your best wave and the leaderboard!';
     clearTimeout(b.t); b.t = setTimeout(() => { b.classList.remove('sure'); b.textContent = 'NEW GAME'; $('splashNote').textContent = 'START carries on where you left off. NEW GAME starts again from nothing.'; }, 3500);
     return;
   }
-  for (const k of ['ragdollLook', 'ragdollRingouts', 'ragdollCombos', 'ragdollBestWave', 'ragdollBestRingouts']) localStorage.removeItem(k);
+  for (const k of ['ragdollLook', 'ragdollRingouts', 'ragdollCombos', 'ragdollBestWave', 'ragdollBestRingouts', 'ragdollRuns']) localStorage.removeItem(k);
   sessionStorage.setItem('ragdollSkipSplash', '1');
   location.reload();
 };

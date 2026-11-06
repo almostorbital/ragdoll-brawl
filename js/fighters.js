@@ -91,10 +91,8 @@ function updateLives(dt) {
 }
 function gameOver() {
   const reached = wave + 1, isBest = reached > LIFE.best;
-  if (isBest) {
-    LIFE.best = reached; localStorage.setItem('ragdollBestWave', reached); localStorage.setItem('ragdollBestRingouts', koCount);
-    boardNewBest(reached, koCount);   // (up on the leaderboard: see leaderboard.js)
-  }
+  if (isBest) { LIFE.best = reached; localStorage.setItem('ragdollBestWave', reached); localStorage.setItem('ragdollBestRingouts', koCount); }
+  boardGameOver(reached, koCount, isBest);   // (on the leaderboard, if it's good enough: see leaderboard.js)
   LIFE.over = 6;
   showGameOver(reached, isBest);
 }

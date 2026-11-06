@@ -743,9 +743,9 @@ body.touch #foes { position: fixed; top: 10px; left: 50%; transform: translateX(
 #boardPanel .nameRow { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 14px; letter-spacing: 1px; margin-bottom: 12px; }
 #boardPanel .nameRow input { flex: 1; min-width: 0; font: 900 20px var(--font); letter-spacing: 2px; text-transform: uppercase; padding: 6px 10px;
   border: 3px solid var(--ink); border-radius: 10px; background: #fff; color: var(--ink); }
-#boardPanel table { width: 100%; border-collapse: separate; border-spacing: 0 4px; font-weight: 900; font-size: 16px; }
+#boardPanel table { width: 100%; border-collapse: separate; border-spacing: 0 3px; font-weight: 900; font-size: 16px; }
 #boardPanel th { font-size: 11px; letter-spacing: 1px; color: #6a6458; text-align: left; padding: 0 8px; }
-#boardPanel td { background: #fff; border-top: 3px solid var(--ink); border-bottom: 3px solid var(--ink); padding: 5px 8px; }
+#boardPanel td { background: #fff; border-top: 3px solid var(--ink); border-bottom: 3px solid var(--ink); padding: 3px 8px; }
 #boardPanel td:first-child { border-left: 3px solid var(--ink); border-radius: 10px 0 0 10px; width: 2em; color: var(--orange); }
 #boardPanel td:last-child { border-right: 3px solid var(--ink); border-radius: 0 10px 10px 0; }
 #boardPanel tr.me td { background: #fff6d6; }
@@ -754,3 +754,7 @@ body.touch #foes { position: fixed; top: 10px; left: 50%; transform: translateX(
 #boardPanel .row { display: flex; gap: 12px; justify-content: center; align-items: center; margin-top: 10px; }
 #boardPanel .row button { margin: 0; }
 #boardPanel #boardPost:disabled { opacity: .5; cursor: default; }
+#boardPanel .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 6px; }
+#boardPanel .tabs button { margin: 0; }
+#boardPanel .tabs button.on { background: var(--orange); color: #fff; }
+#boardPanel .empty { text-align: center; font-weight: 900; font-size: 16px; margin: 24px 0; color: #6a6458; }
