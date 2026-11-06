@@ -60,6 +60,27 @@ function slashBanner(main, sub, kind, t = 2) {
   slashBanner.t2 = setTimeout(() => { el.style.display = 'none'; $('banners').style.visibility = ''; }, t * 1000 + 400);
 }
 
+// ---------------------------------------------------------------- GAME OVER (single player: out of lives)
+// How far you got over everything for a few seconds, and whether that's your best; then a new run starts.
+function showGameOver(reached, isBest) {
+  const el = $('matchEnd');
+  el.className = isBest ? 'win' : 'lose';
+  el.innerHTML = `${isBest ? '<div class="stars">' + Array.from({ length: 40 }, () => `<i style="left:${Math.random() * 100}%;animation-duration:${1.5 + Math.random() * 2}s;animation-delay:${Math.random() * 1.2}s;background:${['#ffd23a', '#ff9a2a', '#7fe05a', '#5ab8ff', '#ff5fb0'][Math.floor(Math.random() * 5)]}"></i>`).join('') + '</div>' : ''}
+    <div class="score">WAVE ${reached}</div>
+    <div class="sub">${isBest ? 'NEW BEST!' : 'Your best: wave ' + LIFE.best}  ·  ${koCount} ring-out${koCount === 1 ? '' : 's'}. A new run in a moment…</div>`;
+  el.style.display = 'flex';
+  slashBanner('GAME OVER', isBest ? 'A NEW BEST: WAVE ' + reached + '!' : 'Out of lives on wave ' + reached, isBest ? 'win' : 'lose', 3.4);
+  showBest();
+  setTimeout(() => { el.style.display = 'none'; }, 5600);
+}
+// your best wave, on the title screen and the menu
+function showBest() {
+  const t = LIFE.best ? 'Your best: wave ' + LIFE.best : '';
+  $('splashBest').textContent = t;
+  $('bestLine').textContent = NET.on ? '' : t;
+}
+showBest();
+
 // ---------------------------------------------------------------- 3, 2, 1, FIGHT!
 // At the start of a game (and of each new online match). wait: online, waiting for your friend to press PLAY.
 const COUNT = { t: 0, wait: false, shown: null };
@@ -137,6 +158,15 @@ function updateUI(dt) {
   if (wave !== UI.lastWave) { slashBanner('ROUND ' + (wave + 1), champWave(wave) ? 'A CHAMPION is coming!' : 'FIGHT!', 'round', 2); UI.lastWave = wave; }
   $('kos').textContent = koCount;
   $('falls').textContent = falls;
+  // (single player: your lives, a heart each. Online, and on the practice ground, it's falls instead)
+  const noLives = NET.on || PRACTICE.on;
+  $('livesWrap').style.display = noLives ? 'none' : '';
+  $('fallsWrap').style.display = noLives ? '' : 'none';
+  if (!noLives && LIFE.lives !== UI.lastLives) {
+    $('lives').textContent = '♥'.repeat(LIFE.lives) || '0';
+    if (LIFE.lives < UI.lastLives) bump($('livesWrap'), 'shake'); else if (UI.lastLives != null) bump($('livesWrap'));
+    UI.lastLives = LIFE.lives;
+  }
   $('wave').textContent = NET.on ? NET.WIN : wave + 1;
 
   // what to do right now (and a warning when they're dragging you off)
@@ -177,11 +207,11 @@ $('newBtn').onclick = () => {
   const b = $('newBtn');
   if (!b.classList.contains('sure')) {
     b.classList.add('sure'); b.textContent = 'SURE? CLICK AGAIN';
-    $('splashNote').textContent = 'This wipes your unlocked gear, your combos and your look!';
+    $('splashNote').textContent = 'This wipes your unlocked gear, your combos, your look and your best wave!';
     clearTimeout(b.t); b.t = setTimeout(() => { b.classList.remove('sure'); b.textContent = 'NEW GAME'; $('splashNote').textContent = 'START carries on where you left off. NEW GAME starts again from nothing.'; }, 3500);
     return;
   }
-  for (const k of ['ragdollLook', 'ragdollRingouts', 'ragdollCombos']) localStorage.removeItem(k);
+  for (const k of ['ragdollLook', 'ragdollRingouts', 'ragdollCombos', 'ragdollBestWave']) localStorage.removeItem(k);
   sessionStorage.setItem('ragdollSkipSplash', '1');
   location.reload();
 };
@@ -192,7 +222,7 @@ function showMenu(paused) {
   $('overlay').classList.toggle('paused', paused);
   $('play').textContent = paused ? 'RESUME' : 'PLAY';
   $('hud').classList.add('hidden');
-  if (paused) $('pauseScore').textContent = PRACTICE.on ? `Practice ground  ·  Dummies knocked off: ${koCount}` : `Ring-outs: ${koCount}  ·  Falls: ${falls}  ·  Wave ${wave + 1}`;
+  if (paused) $('pauseScore').textContent = PRACTICE.on ? `Practice ground  ·  Dummies knocked off: ${koCount}` : NET.on ? `Ring-outs: ${koCount}  ·  Falls: ${falls}` : `Wave ${wave + 1}  ·  Lives: ${LIFE.lives}  ·  Ring-outs: ${koCount}`;
   fitTitle();
 }
 function hideMenu() {

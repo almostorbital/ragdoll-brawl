@@ -728,3 +728,12 @@ body.touch #foes { position: fixed; top: 10px; left: 50%; transform: translateX(
 /* PRACTICE: sandbag-coloured, like the dummies; and the last button, on its own, goes all the way across */
 #overlay .smalls #practiceBtn { background: linear-gradient(#f0cf98, #d29a55); border-left-color: #d8b07a; }
 #overlay .smalls button.small:last-child:nth-child(odd) { grid-column: span 2; }
+
+/* ---------------------------------------------------------------- lives and your best wave */
+#lives { color: #ff4a5a; letter-spacing: 1px; }
+#livesWrap { display: inline-block; }
+#livesWrap.shake { animation: shake .4s; }
+#livesWrap.bump { animation: bump .4s; }
+.bestLine { margin: 10px 0 0; font-size: 17px; font-weight: 900; color: var(--orange); min-height: 1.2em; }
+#splash .bestLine { align-self: center; margin: -8px 0 14px; }
+#overlay.paused .bestLine { display: none; }

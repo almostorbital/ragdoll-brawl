@@ -48,6 +48,8 @@ function updateWaves(dt) {
   if (NET.on) return;   // (online 1v1: no other fighters. See net.js)
   if (FIGHTER_POOL.length < MAX_FIGHTERS) return;   // (still loading)
   if (PRACTICE.on) return updatePractice(dt);   // (the practice ground: dummies instead. See practice.js)
+  updateLives(dt);
+  if (LIFE.over) return;   // (GAME OVER: no more fighters till the next run)
   if (waveToDrop > 0) {
     dropT -= dt;
     if (dropT > 0) return;
@@ -57,9 +59,51 @@ function updateWaves(dt) {
     return;
   }
   if (fighters.length) return;
-  if (waveBreak === 0) { waveBreak = 3.5; slashBanner('ROUND CLEAR!', 'You knocked them all off!', 'win', 2.4); return; }
+  if (waveBreak === 0) {
+    waveBreak = 3.5;
+    // (beat a champion's wave: a life back, up to MAX_LIVES)
+    const bonus = champWave(wave) && LIFE.lives < MAX_LIVES;
+    if (bonus) LIFE.lives++;
+    slashBanner('ROUND CLEAR!', bonus ? 'You beat the champion: +1 LIFE!' : 'You knocked them all off!', 'win', 2.4);
+    return;
+  }
   waveBreak -= dt;
   if (waveBreak <= 0) { waveBreak = 0; wave++; waveToDrop = waveSize(wave); dropT = 1.2; }
+}
+
+// ---------------------------------------------------------------- lives (single player)
+// You get START_LIVES a run. Each fall costs one; beating a champion's wave gives one back (up to MAX_LIVES).
+// Lose the lot and it's GAME OVER: how far you got and your best (remembered), then a fresh run from wave 1.
+const START_LIVES = 3, MAX_LIVES = 5;
+const LIFE = { lives: START_LIVES, falls: 0, over: 0, best: +localStorage.getItem('ragdollBestWave') || 0 };
+function updateLives(dt) {
+  if (LIFE.over > 0) {
+    LIFE.falls = falls;   // (falling about while it's over doesn't count)
+    LIFE.over -= dt;
+    if (LIFE.over <= 0) newRun();
+    return;
+  }
+  if (falls === LIFE.falls) return;
+  LIFE.falls = falls;
+  LIFE.lives = Math.max(0, LIFE.lives - 1);
+  if (LIFE.lives === 1) setTimeout(() => banner('LAST LIFE!', 'bad'), 400);
+  if (LIFE.lives === 0) gameOver();
+}
+function gameOver() {
+  const reached = wave + 1, isBest = reached > LIFE.best;
+  if (isBest) { LIFE.best = reached; localStorage.setItem('ragdollBestWave', reached); }
+  LIFE.over = 6;
+  showGameOver(reached, isBest);
+}
+// a fresh run: everyone off, back to wave 1 with full lives, 3, 2, 1...
+function newRun() {
+  LIFE.over = 0;
+  for (const F of fighters.slice()) takeOff(F);
+  if (allies.length) endAlly(true);
+  wave = 0; waveToDrop = waveSize(0); dropT = 1; waveBreak = 0;
+  koCount = falls = 0; UI.lastKO = UI.lastFalls = UI.lastWave = 0;
+  LIFE.lives = START_LIVES; LIFE.falls = 0;
+  respawn(); startCountdown();
 }
 const ARMED = { hands: ['boxing gloves', 'cartoon hammer'], feet: ['butter shoes', 'spring shoes'] };
 // a fighter joins the fight (champ: it's the champion)

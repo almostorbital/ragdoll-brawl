@@ -23,7 +23,7 @@
   <!-- the score, top right -->
   <div id="score">
     <div class="big"><span id="kos">0</span><small>RING-OUTS</small></div>
-    <div class="row"><span><i id="waveLabel">Wave</i> <b id="wave">1</b></span><span>Falls <b id="falls">0</b></span></div>
+    <div class="row"><span><i id="waveLabel">Wave</i> <b id="wave">1</b></span><span id="livesWrap">Lives <b id="lives"></b></span><span id="fallsWrap">Falls <b id="falls">0</b></span></div>
   </div>
   <!-- the controls, bottom right (H to show or hide; filled in by controls.js, with your keys) -->
   <div id="help"></div>
@@ -44,6 +44,7 @@
   <div class="box">
     <h1><span class="w1">RAGDOLL</span><span class="w2">BRAWL</span></h1>
     <p class="tag" id="modeTag">Knock them all off the sky island!</p>
+    <p class="bestLine" id="bestLine"></p>
     <p class="pausedOnly" id="pauseScore"></p>
     <p id="loading">Loading…</p>
     <p id="netStatus" style="display:none"></p>
@@ -56,6 +57,7 @@
   <div id="splash">
     <h1><span class="w1">RAGDOLL</span><span class="w2">BRAWL</span></h1>
     <p class="splashTag">Knock them all off the sky island!</p>
+    <p class="bestLine" id="splashBest"></p>
     <button id="startBtn">START</button>
     <button id="newBtn">NEW GAME</button>
     <p class="splashNote" id="splashNote">START carries on where you left off. NEW GAME starts again from nothing.</p>
